@@ -122,7 +122,26 @@ const StreamManagerWebBroadcast = forwardRef(
         }
       );
       const createStageResponse = await response.json();
-      joinStageFn(createStageResponse);
+      const joinRes = await fetch(
+        'https://pqyf6f3sk0.execute-api.us-east-1.amazonaws.com/prod/join',
+        {
+          body: JSON.stringify({
+            groupId: createStageResponse?.groupId,
+            userId: userData?.username,
+            attributes: {
+              avatarUrl: '',
+              username: userData?.username
+            }
+          }),
+          method: 'POST'
+        }
+      );
+      const joinData = await joinRes.json();
+      console.log('Token',joinData?.stage?.token?.token)
+      handleSetStageInfo({ ...createStageResponse, ...joinData });
+      joinStage(joinData?.stage?.token?.token);
+      onExpand();
+      //joinStageFn(createStageResponse);
 
       // const stage = new Stage(joinData?.stage?.token?.token, strategy);
       // await stage.join();
@@ -141,7 +160,7 @@ const StreamManagerWebBroadcast = forwardRef(
         'https://pqyf6f3sk0.execute-api.us-east-1.amazonaws.com/prod/join',
         {
           body: JSON.stringify({
-            groupId: 'arn:aws:ivs:us-east-1:107911280745:stage/58bNGdOIAXIv',
+            groupId: createStageResponse?.groupId,
             userId: userData?.username,
             attributes: {
               avatarUrl: '',
@@ -153,8 +172,8 @@ const StreamManagerWebBroadcast = forwardRef(
       );
       const joinData = await joinRes.json();
       console.log('Token',joinData?.stage?.token?.token)
-      // handleSetStageInfo({ ...createStageResponse, ...joinData });
-      // joinStage(joinData?.stage?.token?.token);
+      handleSetStageInfo({ ...createStageResponse, ...joinData });
+      joinStage(joinData?.stage?.token?.token);
       // onExpand();
     };
     const webBroadcastControllerButtons = useMemo(
@@ -309,7 +328,7 @@ const StreamManagerWebBroadcast = forwardRef(
         )} */}
         {isDefaultGoLiveButton && (
           <Button
-            onClick={joinStageFn}
+            onClick={onStartStage}
             variant="primary"
             className={clsm([
               'h-14',
