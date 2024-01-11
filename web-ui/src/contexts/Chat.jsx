@@ -579,6 +579,7 @@ export const Provider = ({ children }) => {
           setJoinRequestStatus({ status: 'REQUEST_APPROVED', userId });
           userData?.id === userId &&
             navigate('/manager', {
+              replace:true,
               state: {
                 joinAsParticipant: true,
                 groupId: groupId

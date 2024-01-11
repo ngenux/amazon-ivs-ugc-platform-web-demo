@@ -1,4 +1,4 @@
-import React, { memo, useContext, useEffect,useState } from 'react';
+import React, { memo, useContext, useEffect, useState } from 'react';
 import LocalVideo from './LocalVideo.js';
 import { useLocation } from 'react-router-dom';
 import Button from '../../components/Button';
@@ -21,11 +21,11 @@ function LocalMedia() {
   const { joinStage, stageJoined, leaveStage } = useContext(StageContext);
 
   const { userData } = useUser();
-  const { isModerator, setStageData, isStageOwner, setIsStageOwner} =
+  const { isModerator, setStageData, isStageOwner, setIsStageOwner } =
     useChat();
-    const {isChannelLoading} = useChannel()
+  const { isChannelLoading } = useChannel();
   const { state } = useLocation();
-  const {joinAsParticipant,groupId} = state;
+  const { joinAsParticipant, groupId } = state;
   function handleIngestChange(endpoint) {
     init(endpoint);
   }
@@ -85,11 +85,10 @@ function LocalMedia() {
   useEffect(() => {
     if (joinAsParticipant && !isChannelLoading) {
       joinStageFn(groupId);
-    console.log('isChannelLoading',isChannelLoading)
-
+      console.log('isChannelLoading', isChannelLoading);
     }
-    console.log('isChannelLoading',isChannelLoading)
-  }, [joinAsParticipant,groupId,isChannelLoading]);
+    console.log('isChannelLoading', isChannelLoading);
+  }, [joinAsParticipant, groupId, isChannelLoading]);
 
   useEffect(() => {
     stageJoined && toggleBroadcast();
