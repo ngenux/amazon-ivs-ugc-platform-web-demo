@@ -80,7 +80,7 @@ const ParticipantList = () => {
         <hr
             style={{ borderTop: "1px solid lightgrey" }}
         />
-            {filteredChatParticipants?.length > 0 && <span className="flex self-center pl-3">Participants</span>}
+            {filteredChatParticipants?.length > 0 && <span className="flex self-center pl-3">Other Participants</span>}
             {/* <hr
             style={{ borderTop: "1px solid lightgrey" }}
             className='w-5/6 ml-2'

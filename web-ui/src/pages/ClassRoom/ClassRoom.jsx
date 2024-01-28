@@ -24,9 +24,9 @@ const Accordion = () => {
           className="flex items-center justify-between cursor-pointer"
           onClick={toggleAccordion}
         >
-          <h2 className="text-lg font-semibol text-black">Participants</h2>
+          <i className="text-black">Participants</i>
           <svg
-            className={`w-6 h-6 ${isOpen ? 'transform rotate-180' : ''}`}
+            className={`w-4 h-4 ${isOpen ? 'transform rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
