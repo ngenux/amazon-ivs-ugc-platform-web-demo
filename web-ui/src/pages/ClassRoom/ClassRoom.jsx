@@ -9,6 +9,9 @@ import StageParticipants from './components/StageParticipants.jsx';
 import VideoControls from './components/VideoControls.jsx';
 import { useMediaCanvas } from './hooks/useMediaCanvas.js';
 import useWebcam from './hooks/useWebCam.js';
+import { useChat } from '../../contexts/Chat.jsx';
+import { useUser } from '../../contexts/User.jsx';
+import SharedCanvas from './components/SharedCanvas.jsx';
 
 const Accordion = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,17 +54,41 @@ const Accordion = () => {
 };
 const ClassroomApp = () => {
   const { isSmall } = useMediaCanvas();
+  const {
+    joinRequestStatus,
+    stageData,
+    setStageData,
+    isStageOwner,
+    setIsStageOwner,
+    sendDrawEvents,
+    registerDrawingEventHandler,
+    userData
+  } = useChat();
+  // const { userData } = useUser();
 
+  const chatConfig = {
+    joinRequestStatus,
+    stageData,
+    setStageData,
+    isStageOwner,
+    setIsStageOwner,
+    sendDrawEvents,
+    registerDrawingEventHandler
+  };
   return (
     <div className="flex flex-row h-screen">
       <div className="w-3/4 flex flex-col">
         <StageParticipants />
-        <MainTeacher />
-        <VideoControls />
+        {/* <MainTeacher /> */}
+        <SharedCanvas {...chatConfig} activeUser={userData?.id}/>
+        <VideoControls {...chatConfig} userData={userData}/>
       </div>
-      <div className={clsm("w-1/4 border-l-2 border-gray-300 rounded bg-gray-100 flex flex-col",
-        isSmall ? 'h-3/4' : 'h-full')}
-        >
+      <div
+        className={clsm(
+          'w-1/4 border-l-2 border-gray-300 rounded bg-gray-100 flex flex-col',
+          isSmall ? 'h-3/4' : 'h-full'
+        )}
+      >
         <div className="border-b-2 mb-1">
           <Accordion />
         </div>
@@ -69,7 +96,7 @@ const ClassroomApp = () => {
           <ChatManager />
         </div>
       </div>
-          <Modal isOpen={isSmall} />
+      <Modal isOpen={isSmall} />
     </div>
   );
 };

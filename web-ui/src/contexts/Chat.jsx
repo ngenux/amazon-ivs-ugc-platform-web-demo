@@ -55,8 +55,11 @@ const REQUEST_STATUS = {
   NOTIFY_USER_LEAVE: 'NOTIFY_USER_LEAVE',
   NOTIFY_ALL_USERS: 'NOTIFY_ALL_USERS'
 };
+const CANVAS_EVENTS = {
+  DRAW_EVENTS: 'DRAW_EVENTS',
+};
 const { REQUEST_JOIN, REQUEST_APPROVED, REQUEST_REJECTED,REQUEST_WITHDRAWN, NOTIFY_USER_JOIN, NOTIFY_USER_LEAVE, NOTIFY_ALL_USERS } = REQUEST_STATUS;
-
+const {DRAW_EVENTS} = CANVAS_EVENTS
 const $content = $channelContent.chat;
 
 const { INFO: info, DEBUG: debug } = CHAT_LOG_LEVELS;
@@ -182,6 +185,8 @@ const { username: chatRoomOwner, isViewerBanned = false } =
   const [stageData, setStageData] = useState();
   const [isStageOwner, setIsStageOwner] = useState(false);
   const [participantList, setParticipantList] = useState([]);
+  const [drawingEventHandler, setDrawingEventHandler] = useState(null);
+
   const isModerator = chatUserRole === CHAT_USER_ROLE.MODERATOR;
 
   // Poll Stream Action
@@ -344,12 +349,12 @@ const { username: chatRoomOwner, isViewerBanned = false } =
     console.log("Notify user leave called");
     const attributes = {
       eventType: NOTIFY_USER_LEAVE,
-      userId: userData.id,
+      userId: userData?.id,
       leftUsername: userData.username
     };
     await actions.sendMessage(NOTIFY_USER_LEAVE, attributes);
     return true;
-  }, [actions]);
+  }, [actions,userData]);
 
   const notifyAllUsers = useCallback(async (list) => {
     console.log("Notify all users called", list);
@@ -360,6 +365,22 @@ const { username: chatRoomOwner, isViewerBanned = false } =
     await actions.sendMessage(NOTIFY_ALL_USERS, attributes);
     return true;
   }, [actions]);
+
+  const sendDrawEvents = useCallback(async (payload) => {
+    // console.log('stageData', stageData);
+    const attributes = {
+      eventType: DRAW_EVENTS,
+      userId: userData?.id,
+      drawEventsData:payload
+    };
+    await actions.sendMessage(DRAW_EVENTS, attributes);
+
+    return true;
+  }, [actions]);
+
+  const registerDrawingEventHandler = useCallback((handler) => {
+    setDrawingEventHandler(() => handler);
+  }, []);
 
   const initMessages = useCallback(() => {
     const initialMessages = savedMessages.current[chatRoomOwnerUsername] || [];
@@ -541,6 +562,7 @@ const { username: chatRoomOwner, isViewerBanned = false } =
           joinedUsername = undefined,
           participantList = undefined,
           leftUsername = undefined,
+          drawEventsData=undefined
         }
       } = message;
       switch (eventType) {
@@ -689,6 +711,11 @@ const { username: chatRoomOwner, isViewerBanned = false } =
             notifyAllUsers(tempList);
           }
           break;
+        case DRAW_EVENTS:
+          if (drawingEventHandler && userId!== userData.id) {
+            drawingEventHandler(drawEventsData);
+          }
+          break;
         default:
           break;
       }
@@ -787,12 +814,15 @@ const { username: chatRoomOwner, isViewerBanned = false } =
       requestReject,
       requestWithdraw,
       notifyUserJoin,
+      userData,
       joinRequestStatus,
       stageData,
       setStageData,
       isStageOwner,
       setIsStageOwner,
-      participantList
+      participantList,
+      sendDrawEvents,
+      registerDrawingEventHandler
     }),
     [
       actions,
@@ -813,6 +843,7 @@ const { username: chatRoomOwner, isViewerBanned = false } =
       requestReject,
       requestWithdraw,
       notifyUserJoin,
+      userData,
       deletedMessage,
       setDeletedMessage,
       joinRequestStatus,
@@ -820,7 +851,9 @@ const { username: chatRoomOwner, isViewerBanned = false } =
       setStageData,
       isStageOwner,
       setIsStageOwner,
-      participantList
+      participantList,
+      sendDrawEvents,
+      registerDrawingEventHandler
     ]
   );
 

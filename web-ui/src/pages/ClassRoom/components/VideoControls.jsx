@@ -11,8 +11,8 @@ import {
   WhiteBoard,
   WhiteBoardOff
 } from '../../../assets/icons/index.js';
-import { useChat } from '../../../contexts/Chat.jsx';
-import { useUser } from '../../../contexts/User.jsx';
+// import { useChat } from '../../../contexts/Chat.jsx';
+// import { useUser } from '../../../contexts/User.jsx';
 import { BroadcastContext } from '../contexts/BroadcastContext.js';
 import { LocalMediaContext } from '../contexts/LocalMediaContext.js';
 import { StageContext } from '../contexts/StageContext.js';
@@ -21,7 +21,16 @@ import { useMediaCanvas } from '../hooks/useMediaCanvas.js';
 const { StreamType } = window.IVSBroadcastClient;
 let count = 0;
 
-export default function VideoControls() {
+export default function VideoControls({
+  joinRequestStatus,
+  stageData,
+  setStageData,
+  isStageOwner,
+  setIsStageOwner,
+  sendDrawEvents,
+  registerDrawingEventHandler,
+  userData
+}) {
   const {
     isSmall,
     toggleScreenShare,
@@ -54,14 +63,16 @@ export default function VideoControls() {
     leaveStage,
   } = useContext(StageContext);
 
-  const { userData } = useUser();
-  const {
-    joinRequestStatus,
-    stageData,
-    setStageData,
-    isStageOwner,
-    setIsStageOwner
-  } = useChat();
+  // const { userData } = useUser();
+  // const {
+  //   joinRequestStatus,
+  //   stageData,
+  //   setStageData,
+  //   isStageOwner,
+  //   setIsStageOwner,
+  //   sendDrawEvents,
+  //     registerDrawingEventHandler
+  // } = useChat();
   const { state } = useLocation();
   const navigate = useNavigate()
   function handleIngestChange(endpoint) {
@@ -140,6 +151,8 @@ export default function VideoControls() {
   useEffect(()=>{
     stageJoined && toggleBroadcast()
   },[stageJoined])
+
+  
 
   const joinStageFn = async (groupId) => {
     if (count > 0) return;
@@ -256,9 +269,11 @@ export default function VideoControls() {
 
         {/* <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
-          onClick={toggleVirtualBackground}
+          onClick={()=>{
+            sendDrawEvents('user1,#ff9911|1,333,256|1,335,256|1,335,257|1,337,258|1,339,259|1,342,261|1,343,262|1,345,263|1,348,265|1,349,265|1,351,266|1,353,267|1,354,267|1,356,268|1,357,268|1,359,268|1,359,268|1,360,268|1,361,268|1,362,268|1,363,268|1,364,268|1,365,268|1,367,268|1,368,267|1,369,267|1,370,266|1,372,266|1,373,265|1,374,264|1,375,263|1,376,262|1,377,261|1,379,259|1,379,258|1,381,256|1,382,253|1,383,251|1,385,249|1,386,245')
+          }}
         >
-          {isVirtualBackgroundActive?"Remove":"Add"} Background
+          Send Events
         </button> */}
       </div>
     </div>

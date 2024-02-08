@@ -28,7 +28,7 @@ export default function MainTeacher() {
             style={{
               height: '100%',
               width: '100%',
-              display: isWhiteBoardActive || isSmall ? 'none' : 'block'
+              display: 'none'
             }}
           />
           {isWhiteBoardActive && (
