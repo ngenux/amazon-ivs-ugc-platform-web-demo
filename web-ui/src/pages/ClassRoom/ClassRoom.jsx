@@ -9,7 +9,7 @@ import StageParticipants from './components/StageParticipants.jsx';
 import VideoControls from './components/VideoControls.jsx';
 import { useMediaCanvas } from './hooks/useMediaCanvas.js';
 import useWebcam from './hooks/useWebCam.js';
-
+import { useResponsiveDevice } from '../../contexts/ResponsiveDevice.jsx';
 const Accordion = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -51,17 +51,30 @@ const Accordion = () => {
 };
 const ClassroomApp = () => {
   const { isSmall } = useMediaCanvas();
-
+  const { isMobileView } = useResponsiveDevice();
   return (
-    <div className="flex flex-row h-screen">
-      <div className="w-3/4 flex flex-col">
+    <div
+      className={clsm(
+        'flex flex-row h-screen',
+        isMobileView && 'flex flex-col w-screen justify-center'
+      )}
+    >
+      <div
+        className={clsm(
+          'w-3/4 flex flex-col',
+          isMobileView && 'flex w-screen justify-center'
+        )}
+      >
         <StageParticipants />
         <MainTeacher />
         <VideoControls />
       </div>
-      <div className={clsm("w-1/4 border-l-2 border-gray-300 rounded bg-gray-100 flex flex-col",
-        isSmall ? 'h-3/4' : 'h-full')}
-        >
+      <div
+        className={clsm(
+          'w-1/4 border-l-2 border-gray-300 rounded bg-gray-100 flex flex-col h-full',
+          isMobileView && 'flex w-screen justify-center'
+        )}
+      >
         <div className="border-b-2 mb-1">
           <Accordion />
         </div>
@@ -69,7 +82,7 @@ const ClassroomApp = () => {
           <ChatManager />
         </div>
       </div>
-          <Modal isOpen={isSmall} />
+      <Modal isOpen={isSmall} />
     </div>
   );
 };
@@ -78,6 +91,9 @@ const Modal = ({ isOpen, onClose }) => {
   const { isVideoMuted, webcamVideoRef } = useMediaCanvas();
 
   const smallVideoRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!smallVideoRef.current || !isOpen) return;
@@ -120,6 +136,28 @@ const Modal = ({ isOpen, onClose }) => {
     ctx.fillText('Camera Off', x, y);
   };
 
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const x = e.clientX - startPosition.x;
+    const y = e.clientY - startPosition.y;
+    setPosition({ x: position.x + x, y: position.y + y });
+    setStartPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
   return (
     <div
       className={clsm([
@@ -130,8 +168,15 @@ const Modal = ({ isOpen, onClose }) => {
         isOpen ? 'h-1/4' : 'h-0',
         // 'overflow-auto',
         'mt-auto',
-        'bg-[#f6f6f6]'
+        'bg-[#f6f6f6]',
+        'cursor-move'
       ])}
+      style={{
+        transform: `translate(${position.x}px, ${position.y}px)`
+      }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
       <canvas
         ref={smallVideoRef}
