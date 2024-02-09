@@ -1,17 +1,17 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import React, { useEffect, useRef, useState } from 'react';
+import React,{ useContext, useEffect, useRef, useState } from 'react';
+import { useChat } from '../../contexts/Chat.jsx';
 import { clsm } from '../../utils.js';
+import { StageContext } from './contexts/StageContext.js';
+import { isLocalParticipant } from './hooks/useStage.js';
 import ChatManager from './components/ChatManager.jsx';
 import MainTeacher from './components/MainTeacher.jsx';
 import ParticipantList from './components/ParticipantList.jsx';
+import SharedCanvas from './components/SharedCanvas.jsx';
 import StageParticipants from './components/StageParticipants.jsx';
 import VideoControls from './components/VideoControls.jsx';
 import { useMediaCanvas } from './hooks/useMediaCanvas.js';
-import useWebcam from './hooks/useWebCam.js';
-import { useChat } from '../../contexts/Chat.jsx';
-import { useUser } from '../../contexts/User.jsx';
-import SharedCanvas from './components/SharedCanvas.jsx';
 
 const Accordion = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +64,32 @@ const ClassroomApp = () => {
     registerDrawingEventHandler,
     userData
   } = useChat();
-  // const { userData } = useUser();
+
+  const { participants } = useContext(StageContext);
+  const [stageParticipants, setStageParticipants] = useState();
+  const [localParticipant,setLocalParticipant] = useState();
+
+  // useEffect(() => {
+  //   let filteredParticipants = Array.from(participants).filter(
+  //     ([key, value]) => !isLocalParticipant(value)
+  //   );
+
+  //   let filteredParticipantsMap = new Map(filteredParticipants);
+  //   setStageParticipants(filteredParticipantsMap);
+  // }, [participants]);
+
+  useEffect(() => {
+    // Temporary storage for filtered participants
+    let tempFilteredParticipants = new Map();
+    participants.forEach((value, key) => {
+      if (isLocalParticipant(value)) {
+        setLocalParticipant(value);
+      } else {
+        tempFilteredParticipants.set(key, value);
+      }
+    });
+    setStageParticipants(tempFilteredParticipants); 
+  }, [participants]); 
 
   const chatConfig = {
     joinRequestStatus,
@@ -75,11 +100,12 @@ const ClassroomApp = () => {
     sendDrawEvents,
     registerDrawingEventHandler
   };
+
   return (
     <div className="flex flex-row h-screen">
       <div className="w-3/4 flex flex-col">
-        <StageParticipants />
-        {/* <MainTeacher /> */}
+        <StageParticipants stageParticipants={stageParticipants}/>
+        <MainTeacher />
         <SharedCanvas {...chatConfig} activeUser={userData?.id}/>
         <VideoControls {...chatConfig} userData={userData}/>
       </div>

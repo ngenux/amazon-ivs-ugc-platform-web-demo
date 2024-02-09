@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Layer, Line, Stage, Rect } from 'react-konva';
+import { Layer, Line, Stage, Rect, Image } from 'react-konva';
 import ColorPickerModal from './ColorPicker';
 import useDebouncedEventQueue, {
   convertStringToJSON
@@ -15,7 +15,24 @@ const referenceDimensions = {
   width: 1000,
   height: 800
 };
-const baseStrokeWidth = 5; 
+const baseStrokeWidth = 5;
+
+async function captureScreen() {
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true
+    });
+    return stream;
+  } catch (err) {
+    console.error('Error capturing screen:', err);
+  }
+}
+function createVideoElement(stream) {
+  const video = document.createElement('video');
+  video.srcObject = stream;
+  video.play(); // Start playing the video to ensure it's ready to be drawn
+  return video;
+}
 
 const SharedCanvas = ({
   activeUser,
@@ -26,18 +43,20 @@ const SharedCanvas = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#df4b26');
+  const [aspectRatio, setAspectRatio] = useState(getAspectRatio());
 
   const containerRef = useRef(null);
   const isDrawingRef = useRef(false);
+  const imageRef = useRef(null);
+  const videoRef = useRef(null);
 
   const scaleFactorRef = useRef({
     x: 0,
     y: 0
   });
 
-
-
-  const commonMultiplier = (scaleFactorRef.current.x + scaleFactorRef.current.y) / 2;
+  const commonMultiplier =
+    (scaleFactorRef.current.x + scaleFactorRef.current.y) / 2;
 
   const adjustedStrokeWidth = baseStrokeWidth * commonMultiplier;
 
@@ -46,7 +65,11 @@ const SharedCanvas = ({
     maxQueueSize,
     sendDrawEvents
   );
-
+  function getAspectRatio() {
+    const width = screen.width;
+    const height = screen.height;
+    return (width / height).toFixed(2); // Keeping two decimal places for simplicity
+  }
   useEffect(() => {
     const updateCanvasSize = () => {
       if (containerRef.current) {
@@ -86,6 +109,44 @@ const SharedCanvas = ({
 
     return () => registerDrawingEventHandler(null);
   }, [registerDrawingEventHandler, sendDrawEvents]);
+
+  // useEffect(() => {
+  //   captureScreen().then((stream) => {
+  //     const videoElement = createVideoElement(stream);
+  //     videoRef.current = videoElement;
+
+  //     videoElement.onloadedmetadata = () => {
+  //       // Force update the Konva Image once the video is ready
+  //       imageRef.current.getLayer().batchDraw();
+  //     };
+  //     const trackLabel = stream.getVideoTracks()[0].label;
+  //     console.log('trackLabel '+trackLabel)
+
+  //     // Infer the source type from the track label (not reliable across all browsers)
+  //     if (trackLabel.toLowerCase().includes('entire screen')) {
+  //       console.log('User is sharing the entire screen.');
+  //     } else if (trackLabel.toLowerCase().includes('window')) {
+  //       console.log('User is sharing a window.');
+  //     } else if (trackLabel.toLowerCase().includes('tab')) {
+  //       console.log('User is sharing a browser tab.');
+  //     } else {
+  //       console.log('Could not determine the source type.');
+  //     }
+  //   });
+  // }, []);
+
+  // useEffect(() => {
+  //   const anim = new Konva.Animation((frame) => {
+  //     // This will get called on every frame and will trigger a redraw of the Konva.Image
+  //     if (imageRef.current) {
+  //       imageRef.current.getLayer().batchDraw();
+  //     }
+  //   }, imageRef.current?.getLayer());
+
+  //   anim.start();
+
+  //   return () => anim.stop();
+  // }, []);
 
   const handleIncomingDrawEvent = useCallback(
     (data) => {
@@ -216,6 +277,34 @@ const SharedCanvas = ({
   const handleMouseUp = useCallback(() => {
     isDrawingRef.current = false;
     const currentUser = activeUser;
+    setTimeout(() => {
+      setCanvasState((prevCanvasState) => {
+        const userLines = prevCanvasState.userLines[currentUser] || [];
+        if (!userLines.length) return prevCanvasState;
+
+        const userUndoStacks = prevCanvasState.undoStacks[currentUser] || [];
+        const newUserUndoStacks =
+          userUndoStacks.length >= 5
+            ? userUndoStacks.slice(1).concat([userLines])
+            : userUndoStacks.concat([userLines]);
+
+        return {
+          ...prevCanvasState,
+          userLines: {
+            ...prevCanvasState.userLines,
+            [currentUser]: []
+          },
+          undoStacks: {
+            ...prevCanvasState.undoStacks,
+            [currentUser]: []
+          },
+          redoStacks: {
+            ...prevCanvasState.redoStacks,
+            [currentUser]: []
+          }
+        };
+      });
+    }, 5000);
     updateUndoStacks(currentUser);
 
     queueEvent({ type: 'mouseup', user: currentUser });
@@ -345,11 +434,10 @@ const SharedCanvas = ({
   };
 
   return (
-    <div className='absolute w-3/4 left-0' style={{top: '18%'}}>
- <div className="relative flex justify-center items-center w-full h-full">
+    <div className="relative flex justify-center items-center w-full h-full">
       <div
         ref={containerRef}
-        className="w-full h-full  border overflow-hidden relative  flex items-center justify-center"
+        className="w-full h-full bg-white shadow-lg rounded-lg overflow-hidden relative border flex items-center justify-center"
       >
         <Stage
           width={dimensions.width}
@@ -359,11 +447,12 @@ const SharedCanvas = ({
           onMouseUp={handleMouseUp}
         >
           <Layer>
-            {/* <Rect
+            <Image
+              ref={imageRef}
+              image={videoRef.current}
               width={dimensions.width}
               height={dimensions.height}
-              fill="#808080" 
-            /> */}
+            />
             {Object.entries(canvasState.userLines).map(([userId, userLines]) =>
               userLines.map((line, i) => (
                 <Line
@@ -424,8 +513,9 @@ const SharedCanvas = ({
           >
             Eraser
           </button> */}
+          {/* Screen Aspect Ratio: {aspectRatio} */}
           <button className="btn" onClick={() => handleButtonAction('Color')}>
-            Color
+            Color 1
           </button>
           {showColorPicker && (
             <ColorPickerModal
@@ -437,8 +527,6 @@ const SharedCanvas = ({
         </div>
       </div>
     </div>
-    </div>
-   
   );
 };
 
