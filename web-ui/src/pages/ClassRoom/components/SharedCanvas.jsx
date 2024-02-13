@@ -1,29 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Layer, Line, Stage, Rect } from 'react-konva';
+import { Layer, Line, Stage } from 'react-konva';
 import ColorPickerModal from './ColorPicker';
 import useDebouncedEventQueue, {
   convertStringToJSON
-} from './useDebouncedEventQueue';
+} from '../hooks/useDebouncedEventQueue';
 const maxQueueSize = 40;
 const initialCanvasState = {
   userLines: {},
   undoStacks: {},
   redoStacks: {}
 };
-const aspectRatio = 16 / 9;
 const referenceDimensions = {
   width: 1000,
   height: 800
 };
-const baseStrokeWidth = 5; 
+const baseStrokeWidth = 5;
 
 const SharedCanvas = ({
   activeUser,
   sendDrawEvents,
-  registerDrawingEventHandler
+  receiveDrawEvents,
+  dimensions
 }) => {
   const [canvasState, setCanvasState] = useState(initialCanvasState);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  // const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#df4b26');
 
@@ -35,9 +35,8 @@ const SharedCanvas = ({
     y: 0
   });
 
-
-
-  const commonMultiplier = (scaleFactorRef.current.x + scaleFactorRef.current.y) / 2;
+  const commonMultiplier =
+    (scaleFactorRef.current.x + scaleFactorRef.current.y) / 2;
 
   const adjustedStrokeWidth = baseStrokeWidth * commonMultiplier;
 
@@ -48,23 +47,31 @@ const SharedCanvas = ({
   );
 
   useEffect(() => {
-    const updateCanvasSize = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        const height = containerWidth / aspectRatio; // Maintain aspect ratio
-        setDimensions({ width: containerWidth, height });
-        scaleFactorRef.current = {
-          x: +(containerWidth / referenceDimensions.width).toFixed(3),
-          y: +(height / referenceDimensions.height).toFixed(3)
-        };
-      }
-    };
+    // const updateCanvasSize = () => {
+    //   if (dimensions) {
+    //     const containerWidth = containerRef.current.offsetWidth;
+    //     const height = containerWidth / aspectRatio; // Maintain aspect ratio
+    //     setDimensions({ width: containerWidth, height });
+    //     scaleFactorRef.current = {
+    //       x: +(containerWidth / referenceDimensions.width).toFixed(3),
+    //       y: +(height / referenceDimensions.height).toFixed(3)
+    //     };
+    //   }
+    // };
 
-    window.addEventListener('resize', updateCanvasSize);
-    updateCanvasSize();
+    // window.addEventListener('resize', updateCanvasSize);
+    // updateCanvasSize();
 
-    return () => window.removeEventListener('resize', updateCanvasSize);
-  }, []);
+    // return () => window.removeEventListener('resize', updateCanvasSize);
+    if (dimensions) {
+      const { width, height } = dimensions;
+
+      scaleFactorRef.current = {
+        x: +(width / referenceDimensions.width).toFixed(3),
+        y: +(height / referenceDimensions.height).toFixed(3)
+      };
+    }
+  }, [dimensions]);
 
   useEffect(() => {
     const handleDrawingEvent = (message) => {
@@ -72,8 +79,8 @@ const SharedCanvas = ({
         message?.includes('UNDO') || message?.includes('REDO')
           ? JSON.parse(message)
           : convertStringToJSON(message);
+
       if (data.action === 'DRAW_EVENTS' && activeUser !== data.user) {
-        console.log('DRAW_USER', activeUser, data.user);
         handleIncomingDrawEvent(data);
       } else if (data.action === 'UNDO') {
         performUndo(data.user);
@@ -82,10 +89,10 @@ const SharedCanvas = ({
       }
     };
 
-    registerDrawingEventHandler(handleDrawingEvent);
+    receiveDrawEvents(handleDrawingEvent);
 
-    return () => registerDrawingEventHandler(null);
-  }, [registerDrawingEventHandler, sendDrawEvents]);
+    return () => receiveDrawEvents(null);
+  }, [receiveDrawEvents, sendDrawEvents]);
 
   const handleIncomingDrawEvent = useCallback(
     (data) => {
@@ -95,7 +102,6 @@ const SharedCanvas = ({
           const userLines = prevCanvasState.userLines[data.user] || [];
           let newLines;
           if (event.type === 'mousedown') {
-            console.log('mousedown', event, scaleFactorRef.current);
 
             newLines = [
               ...userLines,
@@ -109,7 +115,6 @@ const SharedCanvas = ({
               }
             ];
           } else if (event.type === 'mousemove') {
-            console.log('mousemove', event, scaleFactorRef.current);
 
             newLines = userLines.map((line, index) =>
               index === userLines.length - 1
@@ -160,7 +165,7 @@ const SharedCanvas = ({
           }
         };
       });
-      console.log('scaleFactorRef', scaleFactorRef);
+
       queueEvent({
         type: 'mousedown',
         x: parseInt(e.evt.layerX / scaleFactorRef.current.x),
@@ -201,7 +206,6 @@ const SharedCanvas = ({
           userLines: newUserLines
         };
       });
-      console.log('scaleFactorRef', scaleFactorRef);
 
       queueEvent({
         type: 'mousemove',
@@ -345,39 +349,46 @@ const SharedCanvas = ({
   };
 
   return (
-    <div className='absolute w-3/4 left-0' style={{top: '18%'}}>
- <div className="relative flex justify-center items-center w-full h-full">
-      <div
-        ref={containerRef}
-        className="w-full h-full  border overflow-hidden relative  flex items-center justify-center"
-      >
-        <Stage
-          width={dimensions.width}
-          height={dimensions.height}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+    <div
+      className="absolute top-0 left-0 w-full h-full"
+      style={{
+        width: dimensions.width + 'px', 
+        height: dimensions.height + 'px' 
+      }}
+    >
+      <div className="relative flex justify-center items-center w-full h-full">
+        <div
+          ref={containerRef}
+          className="w-full h-full  border overflow-hidden relative  flex items-center justify-center"
         >
-          <Layer>
-            {/* <Rect
+          <Stage
+            width={dimensions.width}
+            height={dimensions.height}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
+            <Layer>
+              {/* <Rect
               width={dimensions.width}
               height={dimensions.height}
               fill="#808080" 
             /> */}
-            {Object.entries(canvasState.userLines).map(([userId, userLines]) =>
-              userLines.map((line, i) => (
-                <Line
-                  key={`${userId}-${i}`}
-                  points={line.points}
-                  stroke={line.color || '#df4b26'}
-                  strokeWidth={adjustedStrokeWidth}
-                  tension={0.5}
-                  lineCap="round"
-                  globalCompositeOperation="source-over"
-                />
-              ))
-            )}
-            {/* {isDrawingRef.current && (
+              {Object.entries(canvasState.userLines).map(
+                ([userId, userLines]) =>
+                  userLines.map((line, i) => (
+                    <Line
+                      key={`${userId}-${i}`}
+                      points={line.points}
+                      stroke={line.color || '#df4b26'}
+                      strokeWidth={adjustedStrokeWidth}
+                      tension={0.5}
+                      lineCap="round"
+                      globalCompositeOperation="source-over"
+                    />
+                  ))
+              )}
+              {/* {isDrawingRef.current && (
               <Text
                 x={mousePosition.x}
                 y={mousePosition.y}
@@ -388,11 +399,11 @@ const SharedCanvas = ({
                 offsetY={10}
               />
             )} */}
-          </Layer>
-        </Stage>
+            </Layer>
+          </Stage>
 
-        <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4">
-          {/* {canvasState.undoStacks[activeUser] && (
+          <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4">
+            {/* {canvasState.undoStacks[activeUser] && (
             <button
               className="btn mx-2" 
               onClick={handleUndo}
@@ -410,9 +421,9 @@ const SharedCanvas = ({
               Redo
             </button>
           )} */}
-        </div>
-        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2">
-          {/* <button
+          </div>
+          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2">
+            {/* <button
             className="btn" 
             onClick={() => handleButtonAction("Action 1")}
           >
@@ -424,21 +435,27 @@ const SharedCanvas = ({
           >
             Eraser
           </button> */}
-          <button className="btn" onClick={() => handleButtonAction('Color')}>
-            Color
-          </button>
-          {showColorPicker && (
-            <ColorPickerModal
-              selectedColor={selectedColor}
-              onSelectColor={handleColorSelect}
-              onClose={() => setShowColorPicker(false)}
-            />
-          )}
+            
+            <button
+              className="p-1  rounded bg-white items-center justify-center"
+              
+              onClick={() => handleButtonAction('Color')}
+            >
+               <p
+              style={{ width: 20, height: 20, backgroundColor: selectedColor }}
+            ></p>
+            </button>
+            {showColorPicker && (
+              <ColorPickerModal
+                selectedColor={selectedColor}
+                onSelectColor={handleColorSelect}
+                onClose={() => setShowColorPicker(false)}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
-    </div>
-   
   );
 };
 

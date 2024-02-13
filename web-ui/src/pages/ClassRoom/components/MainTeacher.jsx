@@ -1,54 +1,54 @@
-import React,{useEffect,useState,useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useMediaCanvas } from '../hooks/useMediaCanvas.js';
-const aspectRatio=16/9
-export default function MainTeacher() {
+import SharedCanvas from './SharedCanvas.jsx';
+const { StreamType } = window.IVSBroadcastClient;
+export default function MainTeacher({
+  chatConfig,
+  activeUser,
+  dimensions,
+  localParticipant,
+  remoteParticipant
+}) {
   const {
     isSmall,
     isWhiteBoardActive,
     displayRef,
     whiteboardRef,
     screenShareVideoRef
-    // displayMouseDown,
-    // displayMouseMove, //Uncomment these for draggable small video.
-    // displayMouseUp
   } = useMediaCanvas();
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const containerRef = useRef(null);
+  const { annotationCanvasState } = chatConfig;
+  const remoteVideoRef = useRef(null);
 
   useEffect(() => {
-    const updateCanvasSize = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        const height = containerWidth / aspectRatio; // Maintain aspect ratio
-        setDimensions({ width: containerWidth, height });
-    
+    if (
+      remoteParticipant &&
+      remoteParticipant?.id === annotationCanvasState?.participantId
+    ) {
+      const videoStream = remoteParticipant?.streams?.find(
+        (stream) => stream.streamType === StreamType.VIDEO
+      );
+      if (remoteVideoRef.current && videoStream) {
+        const stream = new MediaStream([videoStream.mediaStreamTrack]);
+        remoteVideoRef.current.srcObject = stream;
       }
-    };
-
-    window.addEventListener('resize', updateCanvasSize);
-    updateCanvasSize();
-
-    return () => window.removeEventListener('resize', updateCanvasSize);
-  }, []);
+    }
+  }, [remoteParticipant]);
 
   return (
     <div className="h-full">
       <div className="h-full ">
-        <div className="w-full h-full" ref={containerRef}>
-          
+        <div className="w-full h-full relative">
           <canvas
             ref={displayRef}
-            // onMouseDown={displayMouseDown}
-            // onMouseMove={displayMouseMove}  //Uncomment these for draggable small video.
-            // onMouseUp={displayMouseUp}
-            // onMouseLeave={displayMouseUp}
             width={1280}
             height={720}
             style={{
               height: dimensions.height,
               width: dimensions.width,
-              display: isWhiteBoardActive || isSmall ? 'none' : 'block',
-              
+              display:
+                isWhiteBoardActive || isSmall || annotationCanvasState.open
+                  ? 'none'
+                  : 'block'
             }}
           />
           {isWhiteBoardActive && (
@@ -63,6 +63,22 @@ export default function MainTeacher() {
               }}
             />
           )}
+          {annotationCanvasState.open &&
+            annotationCanvasState.participantId !== localParticipant?.id && (
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                style={{
+                  display: !annotationCanvasState.open ? 'none' : 'block',
+                  height: dimensions.height,
+                  width: dimensions.width,
+                  objectFit: 'fill'
+                }}
+              >
+                <track kind="captions"></track>
+              </video>
+            )}
+
           <video
             ref={screenShareVideoRef}
             autoPlay
@@ -70,11 +86,18 @@ export default function MainTeacher() {
               display: !isSmall || isWhiteBoardActive ? 'none' : 'block',
               height: dimensions.height,
               width: dimensions.width,
-              objectFit:'fill'
+              objectFit: 'fill'
             }}
           >
-            <track kind="captions" ></track>
+            <track kind="captions"></track>
           </video>
+          {annotationCanvasState.open ? (
+            <SharedCanvas
+              {...chatConfig}
+              activeUser={activeUser}
+              dimensions={dimensions}
+            />
+          ) : null}
         </div>
       </div>
     </div>

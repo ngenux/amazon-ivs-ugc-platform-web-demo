@@ -1,17 +1,17 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import React,{ useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useChat } from '../../contexts/Chat.jsx';
 import { clsm } from '../../utils.js';
-import { StageContext } from './contexts/StageContext.js';
-import { isLocalParticipant } from './hooks/useStage.js';
 import ChatManager from './components/ChatManager.jsx';
 import MainTeacher from './components/MainTeacher.jsx';
 import ParticipantList from './components/ParticipantList.jsx';
-import SharedCanvas from './components/SharedCanvas.jsx';
 import StageParticipants from './components/StageParticipants.jsx';
 import VideoControls from './components/VideoControls.jsx';
+import { StageContext } from './contexts/StageContext.js';
 import { useMediaCanvas } from './hooks/useMediaCanvas.js';
+const { LocalStageStream } = window.IVSBroadcastClient;
+const aspectRatio = 16 / 9;
 
 const Accordion = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,7 +53,7 @@ const Accordion = () => {
   );
 };
 const ClassroomApp = () => {
-  const { isSmall } = useMediaCanvas();
+  const { isSmall, combinedStream } = useMediaCanvas();
   const {
     joinRequestStatus,
     stageData,
@@ -61,35 +61,89 @@ const ClassroomApp = () => {
     isStageOwner,
     setIsStageOwner,
     sendDrawEvents,
-    registerDrawingEventHandler,
-    userData
+    receiveDrawEvents,
+    userData,
+    annotationCanvasState,
+    startSSWithAnnots,
+    stopSSWithAnnots
   } = useChat();
 
-  const { participants } = useContext(StageContext);
+  const { participants, localParticipant } = useContext(StageContext);
   const [stageParticipants, setStageParticipants] = useState();
-  const [localParticipant,setLocalParticipant] = useState();
-
-  // useEffect(() => {
-  //   let filteredParticipants = Array.from(participants).filter(
-  //     ([key, value]) => !isLocalParticipant(value)
-  //   );
-
-  //   let filteredParticipantsMap = new Map(filteredParticipants);
-  //   setStageParticipants(filteredParticipantsMap);
-  // }, [participants]);
+  const [remoteParticipant, setRemoteParticipant] = useState({});
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    // Temporary storage for filtered participants
-    let tempFilteredParticipants = new Map();
-    participants.forEach((value, key) => {
-      if (isLocalParticipant(value)) {
-        setLocalParticipant(value);
-      } else {
-        tempFilteredParticipants.set(key, value);
+    const updateCanvasSize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        let height = 0;
+        if (annotationCanvasState?.aspectRatio) {
+          height = containerWidth / annotationCanvasState?.aspectRatio;
+        } else {
+          height = containerWidth / aspectRatio;
+        }
+        setDimensions({ width: containerWidth, height });
       }
-    });
-    setStageParticipants(tempFilteredParticipants); 
-  }, [participants]); 
+    };
+
+    window.addEventListener('resize', updateCanvasSize);
+    updateCanvasSize();
+
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, [annotationCanvasState]);
+
+  useEffect(() => {
+    const combinedStageStream = combinedStream
+      ? new LocalStageStream(combinedStream?.getVideoTracks()[0], {
+          simulcast: { enabled: true }
+        })
+      : null;
+
+    let newParticipantsMap = new Map(participants);
+
+    if (annotationCanvasState.participantId) {
+      const rParticipant = participants.get(
+        annotationCanvasState.participantId
+      );
+      setRemoteParticipant(rParticipant);
+
+      newParticipantsMap.delete(annotationCanvasState.participantId);
+
+      if (
+        localParticipant &&
+        localParticipant.id !== annotationCanvasState.participantId
+      ) {
+        localParticipant.streams = [
+          ...(localParticipant?.streams || []),
+          combinedStageStream
+        ];
+        newParticipantsMap.set(localParticipant.id, localParticipant);
+      }
+    } else {
+      if (localParticipant) {
+        newParticipantsMap.delete(localParticipant.id);
+        setStageParticipants((prev) => prev?.delete(localParticipant.id));
+      }
+
+      if (
+        remoteParticipant &&
+        !newParticipantsMap.has(remoteParticipant.id) &&
+        remoteParticipant.id && !annotationCanvasState.participantId
+      ) {
+        newParticipantsMap.set(remoteParticipant.id, remoteParticipant);
+      }
+    }
+
+    setStageParticipants(newParticipantsMap);
+  }, [
+    participants,
+    annotationCanvasState,
+    localParticipant,
+    remoteParticipant,
+    combinedStream
+  ]);
 
   const chatConfig = {
     joinRequestStatus,
@@ -98,16 +152,31 @@ const ClassroomApp = () => {
     isStageOwner,
     setIsStageOwner,
     sendDrawEvents,
-    registerDrawingEventHandler
+    receiveDrawEvents,
+    annotationCanvasState,
+    startSSWithAnnots,
+    stopSSWithAnnots
   };
 
   return (
     <div className="flex flex-row h-screen">
-      <div className="w-3/4 flex flex-col">
-        <StageParticipants stageParticipants={stageParticipants}/>
-        <MainTeacher />
-        <SharedCanvas {...chatConfig} activeUser={userData?.id}/>
-        <VideoControls {...chatConfig} userData={userData}/>
+      <div className="w-3/4 flex flex-col" ref={containerRef}>
+        <StageParticipants
+          stageParticipants={stageParticipants}
+          combinedStream={combinedStream}
+        />
+        <MainTeacher
+          dimensions={dimensions}
+          chatConfig={chatConfig}
+          activeUser={userData?.id}
+          localParticipant={localParticipant}
+          remoteParticipant={remoteParticipant}
+        />
+        <VideoControls
+          {...chatConfig}
+          userData={userData}
+          localParticipant={localParticipant}
+        />
       </div>
       <div
         className={clsm(

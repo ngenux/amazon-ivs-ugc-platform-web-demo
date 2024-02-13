@@ -10,15 +10,9 @@ function useDebouncedEventQueue(activeUser, maxQueueSize, sendDrawEvents) {
         user: activeUser,
         events: [...queue.current]
       };
-      // console.log(payload);
-
-      console.log('normalizedPoint', convertEventsToString(payload));
-      console.log(
-        'normalizedPoint',
-        convertStringToJSON(convertEventsToString(payload))
-      );
+     
       sendDrawEvents(convertEventsToString(payload))
-      // socket.current.emit("drawing-event", );
+  
       queue.current = [];
     }
   }, [activeUser, sendDrawEvents]);
@@ -80,7 +74,6 @@ export const convertEventsToString = (jsonData) => {
   });
 
   const resultStr = result.join('|');
-  console.log('resultStr', resultStr);
   return resultStr;
 };
 

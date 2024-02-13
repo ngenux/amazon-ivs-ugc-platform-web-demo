@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useLocation ,useNavigate} from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CallDisconnect,
   MicOff,
@@ -11,8 +11,6 @@ import {
   WhiteBoard,
   WhiteBoardOff
 } from '../../../assets/icons/index.js';
-// import { useChat } from '../../../contexts/Chat.jsx';
-// import { useUser } from '../../../contexts/User.jsx';
 import { BroadcastContext } from '../contexts/BroadcastContext.js';
 import { LocalMediaContext } from '../contexts/LocalMediaContext.js';
 import { StageContext } from '../contexts/StageContext.js';
@@ -28,8 +26,12 @@ export default function VideoControls({
   isStageOwner,
   setIsStageOwner,
   sendDrawEvents,
-  registerDrawingEventHandler,
-  userData
+  receiveDrawEvents,
+  userData,
+  annotationCanvasState,
+  startSSWithAnnots,
+  stopSSWithAnnots,
+  localParticipant
 }) {
   const {
     isSmall,
@@ -57,24 +59,10 @@ export default function VideoControls({
     updateStreamKey
   } = useContext(BroadcastContext);
   console.log(init, BroadcastContext);
-  const {
-    joinStage,
-    stageJoined,
-    leaveStage,
-  } = useContext(StageContext);
+  const { joinStage, stageJoined, leaveStage } = useContext(StageContext);
 
-  // const { userData } = useUser();
-  // const {
-  //   joinRequestStatus,
-  //   stageData,
-  //   setStageData,
-  //   isStageOwner,
-  //   setIsStageOwner,
-  //   sendDrawEvents,
-  //     registerDrawingEventHandler
-  // } = useChat();
   const { state } = useLocation();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   function handleIngestChange(endpoint) {
     init(endpoint);
   }
@@ -132,7 +120,7 @@ export default function VideoControls({
     if (broadcastStarted) {
       stopBroadcast();
     } else {
-     isStageOwner && startBroadcast();
+      isStageOwner && startBroadcast();
     }
   }
 
@@ -148,11 +136,14 @@ export default function VideoControls({
     }
   }, [state]);
 
-  useEffect(()=>{
-    stageJoined && toggleBroadcast()
-  },[stageJoined])
-
-  
+  useEffect(() => {
+    stageJoined && toggleBroadcast();
+  }, [stageJoined]);
+  useEffect(() => {
+    isScreenShareActive
+      ? startSSWithAnnots(localParticipant?.id)
+      : stopSSWithAnnots();
+  }, [isScreenShareActive, localParticipant]);
 
   const joinStageFn = async (groupId) => {
     if (count > 0) return;
@@ -237,7 +228,7 @@ export default function VideoControls({
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
           onClick={toggleWhiteBoard}
         >
-          { !isWhiteBoardActive ? (
+          {!isWhiteBoardActive ? (
             <WhiteBoard style={{ height: 20 }} />
           ) : (
             <WhiteBoardOff style={{ height: 20 }} />
@@ -246,9 +237,10 @@ export default function VideoControls({
         <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
           onClick={() => {
-            if(state?.joinAsParticipant){
-              count=0;
+            if (state?.joinAsParticipant) {
+              count = 0;
               leaveStage();
+              annotationCanvasState?.open && stopSSWithAnnots();
               navigate(-1);
             }
           }}
@@ -269,9 +261,11 @@ export default function VideoControls({
 
         {/* <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
-          onClick={()=>{
-            sendDrawEvents('user1,#ff9911|1,333,256|1,335,256|1,335,257|1,337,258|1,339,259|1,342,261|1,343,262|1,345,263|1,348,265|1,349,265|1,351,266|1,353,267|1,354,267|1,356,268|1,357,268|1,359,268|1,359,268|1,360,268|1,361,268|1,362,268|1,363,268|1,364,268|1,365,268|1,367,268|1,368,267|1,369,267|1,370,266|1,372,266|1,373,265|1,374,264|1,375,263|1,376,262|1,377,261|1,379,259|1,379,258|1,381,256|1,382,253|1,383,251|1,385,249|1,386,245')
-          }}
+          onClick={() =>
+            annotationCanvasState?.open
+              ? stopSSWithAnnots()
+              : startSSWithAnnots(localParticipant?.id)
+          }
         >
           Send Events
         </button> */}
