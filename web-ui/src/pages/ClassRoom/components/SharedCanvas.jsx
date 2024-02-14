@@ -4,6 +4,7 @@ import ColorPickerModal from './ColorPicker';
 import useDebouncedEventQueue, {
   convertStringToJSON
 } from '../hooks/useDebouncedEventQueue';
+import { Undo, Redo, Clear } from '../../../assets/icons/index.js';
 const maxQueueSize = 40;
 const initialCanvasState = {
   userLines: {},
@@ -102,7 +103,6 @@ const SharedCanvas = ({
           const userLines = prevCanvasState.userLines[data.user] || [];
           let newLines;
           if (event.type === 'mousedown') {
-
             newLines = [
               ...userLines,
               {
@@ -115,7 +115,6 @@ const SharedCanvas = ({
               }
             ];
           } else if (event.type === 'mousemove') {
-
             newLines = userLines.map((line, index) =>
               index === userLines.length - 1
                 ? {
@@ -348,12 +347,29 @@ const SharedCanvas = ({
     setSelectedColor(color);
   };
 
+  const clearAll = useCallback(() => {
+    setCanvasState((prevCanvasState) => {
+      return {
+        ...prevCanvasState,
+        undoStacks: {
+          ...prevCanvasState.undoStacks,
+          [activeUser]: []
+        },
+        userLines: { ...prevCanvasState.userLines, [activeUser]: [] },
+        redoStacks: {
+          ...prevCanvasState.redoStacks,
+          [activeUser]: []
+        }
+      };
+    });
+  }, [activeUser, sendDrawEvents]);
+
   return (
     <div
       className="absolute top-0 left-0 w-full h-full"
       style={{
-        width: dimensions.width + 'px', 
-        height: dimensions.height + 'px' 
+        width: dimensions.width + 'px',
+        height: dimensions.height + 'px'
       }}
     >
       <div className="relative flex justify-center items-center w-full h-full">
@@ -402,26 +418,7 @@ const SharedCanvas = ({
             </Layer>
           </Stage>
 
-          <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4">
-            {/* {canvasState.undoStacks[activeUser] && (
-            <button
-              className="btn mx-2" 
-              onClick={handleUndo}
-              disabled={canvasState.undoStacks[activeUser].length === 0}
-            >
-              Undo
-            </button>
-          )}
-          {canvasState.redoStacks[activeUser] && (
-            <button
-              className="btn mx-2" 
-              onClick={handleRedo}
-              disabled={canvasState.redoStacks[activeUser].length === 0}
-            >
-              Redo
-            </button>
-          )} */}
-          </div>
+          <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4"></div>
           <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2">
             {/* <button
             className="btn" 
@@ -435,16 +432,45 @@ const SharedCanvas = ({
           >
             Eraser
           </button> */}
-            
+
             <button
               className="p-1  rounded bg-white items-center justify-center"
-              
               onClick={() => handleButtonAction('Color')}
             >
-               <p
-              style={{ width: 20, height: 20, backgroundColor: selectedColor }}
-            ></p>
+              <p
+                style={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: selectedColor
+                }}
+              ></p>
             </button>
+            {!!canvasState.undoStacks[activeUser]?.length && (
+              <button
+                className="btn mx-2"
+                onClick={handleUndo}
+                disabled={canvasState.undoStacks[activeUser].length === 0}
+              >
+                <Undo style={{ height: 40 }} />
+              </button>
+            )}
+            {!!canvasState.redoStacks[activeUser]?.length && (
+              <button
+                className="btn m-2"
+                onClick={handleRedo}
+                disabled={canvasState.redoStacks[activeUser].length === 0}
+              >
+                <Redo style={{ height: 40 }} />
+              </button>
+            )}
+
+            {(!!canvasState.redoStacks[activeUser]?.length ||
+              !!canvasState.undoStacks[activeUser]?.length) && (
+              <button className="btn m-2" onClick={clearAll}>
+                <Clear style={{ height: 40 }} />
+              </button>
+            )}
+
             {showColorPicker && (
               <ColorPickerModal
                 selectedColor={selectedColor}
