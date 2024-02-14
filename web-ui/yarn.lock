@@ -2163,6 +2163,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-reconciler@^0.28.0", "@types/react-reconciler@^0.28.2":
+  "integrity" "sha512-SN9c4kxXZonFhbX4hJrZy37yw9e7EIxcpHCxQv5JUS18wDE5ovkQKlqQEkufdJCCMfuI9BnjUJvhYeJ9x5Ra7g=="
+  "resolved" "https://registry.npmjs.org/@types/react-reconciler/-/react-reconciler-0.28.8.tgz"
+  "version" "0.28.8"
+  dependencies:
+    "@types/react" "*"
+
 "@types/react@*", "@types/react@^17.0.0 || ^18.0.0", "@types/react@>=16":
   "integrity" "sha512-7QUCOxvFgnD5Jk8ZKlUAhVcRj7GuJRjnjjiY/IUBWKgOlnvDvTMLD4RTF7NPyVmbRhNrbomZiOepg7M/2Kj1mA=="
   "resolved" "https://registry.npmjs.org/@types/react/-/react-18.0.21.tgz"
@@ -6688,10 +6695,10 @@
   "resolved" "https://registry.npmjs.org/klona/-/klona-2.0.5.tgz"
   "version" "2.0.5"
 
-"konva@^8.0.1 || ^7.2.5 || ^9.0.0":
-  "integrity" "sha512-I4CFGVbWKpzgYi1I0pmoHz8iYfmGc/A61yfltzcuBHMFuBwDsR2VnQo4+eFQ1dGyEAmHcdvTumJ871KqkhuGng=="
-  "resolved" "https://registry.npmjs.org/konva/-/konva-9.3.2.tgz"
-  "version" "9.3.2"
+"konva@^8.0.1 || ^7.2.5 || ^9.0.0", "konva@^9.3.3":
+  "integrity" "sha512-cg/AHxnfawZ1rKxygCnzx0TZY7hQiQiAKgAHPinEwMn49MVrBkeKLj2d0EaleoFG/0y0XhEKTD0dFZiPPdWlCQ=="
+  "resolved" "https://registry.npmjs.org/konva/-/konva-9.3.3.tgz"
+  "version" "9.3.3"
 
 "language-subtag-registry@~0.3.2":
   "integrity" "sha512-tN0MCzyWnoz/4nHS6uxdlFWoUZT7ABptwKPQ52Ea7URk6vll88bWBVhodtnlfEuCcKWNGoc+uGbw1cwa9IKh/w=="
