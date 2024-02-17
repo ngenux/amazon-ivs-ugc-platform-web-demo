@@ -33,6 +33,7 @@ export const Provider = ({ children }) => {
     'stream_manager',
     'stage_manager',
     'classroom',
+    'recordings',
     'settings'
   ].includes(currentPage);
 
