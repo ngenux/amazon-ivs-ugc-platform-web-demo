@@ -1,13 +1,13 @@
 import React from 'react';
 import Participant from './Participant.jsx';
 
-export default function StageParticipants({stageParticipants}) {
+export default function StageParticipants({stageParticipants,setFocusedParticipantId}) {
   return (
     <>
       {stageParticipants ? (
         <div className="flex flex-wrap items-stretch h-1/4 items-center ">
           {[...stageParticipants?.keys()].slice(0, 4).map((key) => {
-            return <Participant key={key} {...stageParticipants?.get(key)} />;
+            return <Participant key={key} {...stageParticipants?.get(key)} setFocusedParticipantId={setFocusedParticipantId}/>;
           })}
           {stageParticipants?.keys().length >= 5 && (
             <div className="w-1/6 h-auto p-1 border-2">

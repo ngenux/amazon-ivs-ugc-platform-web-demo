@@ -6,11 +6,11 @@ import {
   MicOn,
   ScreenShare,
   ScreenShareOff,
+  VideoBG,
   VideoCamera,
   VideoCameraOff,
   WhiteBoard,
-  WhiteBoardOff,
-  VideoBG
+  WhiteBoardOff
 } from '../../../assets/icons/index.js';
 import { BroadcastContext } from '../contexts/BroadcastContext.js';
 import { LocalMediaContext } from '../contexts/LocalMediaContext.js';
@@ -133,6 +133,7 @@ export default function VideoControls({
   useEffect(() => {
     stageJoined && toggleBroadcast();
   }, [stageJoined]);
+  
   useEffect(() => {
     isScreenShareActive
       ? startSSWithAnnots(localParticipant?.id)
@@ -173,7 +174,19 @@ export default function VideoControls({
   if (currentVideoDevice && videoMuted !== currentVideoDevice.isMuted) {
     setVideoMuted(currentVideoDevice.isMuted);
   }
-
+  const handleLeaveStage = async () => {
+    if (state?.joinAsParticipant) {
+      if (annotationCanvasState?.open) {
+        const stopResponse = await stopSSWithAnnots();
+        if (stopResponse) {
+          toggleScreenShare();
+        }
+      }
+      count = 0;
+      leaveStage();
+      navigate(-1);
+    }
+  };
   return (
     /* Video Controls Panel - fixed height */
     <div className="h-18  p-4">
@@ -230,14 +243,7 @@ export default function VideoControls({
         </button>
         <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
-          onClick={() => {
-            if (state?.joinAsParticipant) {
-              count = 0;
-              leaveStage();
-              annotationCanvasState?.open && stopSSWithAnnots();
-              navigate(-1);
-            }
-          }}
+          onClick={handleLeaveStage}
         >
           <CallDisconnect style={{ height: 20 }} />
         </button>
