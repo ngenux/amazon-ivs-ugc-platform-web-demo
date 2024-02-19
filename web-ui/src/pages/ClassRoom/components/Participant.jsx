@@ -47,7 +47,7 @@ export default function Participant({
             className="absolute top-0 right-0 p-2 cursor-pointer"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
             onClick={() => {
-              setFocusedParticipantId((prev) => (prev ? undefined : id));
+              setFocusedParticipantId((prev) => (prev && prev===id ? undefined : id));
             }}
             role="button"
             tabIndex={0}
