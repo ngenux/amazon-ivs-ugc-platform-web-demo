@@ -206,7 +206,7 @@ export const Provider = ({ children }) => {
   const [drawingEventHandler, setDrawingEventHandler] = useState(null);
   const [annotationCanvasState, setAnnotationCanvasState] = useState({
     open: false,
-    aspectRatio:0
+    aspectRatio: 0
   });
 
   const isModerator = chatUserRole === CHAT_USER_ROLE.MODERATOR;
@@ -412,10 +412,10 @@ export const Provider = ({ children }) => {
       const attributes = {
         eventType: OPEN_ANNOTATION_CANVAS,
         userId: userData?.id,
-        participantId : payload
+        participantId: payload
         // drawEventsData:payload
       };
-      console.log('participantId',payload)
+      console.log('participantId', payload);
       await actions.sendMessage(OPEN_ANNOTATION_CANVAS, attributes);
 
       return true;
@@ -623,7 +623,7 @@ export const Provider = ({ children }) => {
           participantList = undefined,
           leftUsername = undefined,
           drawEventsData = undefined,
-          participantId=undefined
+          participantId = undefined
         }
       } = message;
       switch (eventType) {
@@ -806,11 +806,15 @@ export const Provider = ({ children }) => {
           }
           break;
         case OPEN_ANNOTATION_CANVAS:
-          console.log('participantId',participantId)
-          setAnnotationCanvasState({ open: true, userId ,participantId});
+          console.log('participantId', participantId);
+          setAnnotationCanvasState({ open: true, userId, participantId });
           break;
         case CLOSE_ANNOTATION_CANVAS:
-          setAnnotationCanvasState({ open: false, userId });
+          setAnnotationCanvasState({
+            open: false,
+            userId,
+            participantId: undefined
+          });
           break;
         default:
           break;

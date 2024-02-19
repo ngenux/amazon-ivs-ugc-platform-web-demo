@@ -4,8 +4,8 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState,
-  useRef
+  useRef,
+  useState
 } from 'react';
 import useCanvasDrawing from './useDrawingCanvas';
 import useScreenShare from './useScreenShare';
@@ -24,7 +24,7 @@ const MediaCanvasProvider = ({ children }) => {
     screenStream,
     getScreenShare,
     setScreenStream,
-    isScreenShareActive,
+    isScreenShareActive
   } = useScreenShare(setIsSmall);
   const {
     displayRef,
@@ -37,12 +37,8 @@ const MediaCanvasProvider = ({ children }) => {
     displayMouseMove,
     displayMouseUp
   } = useCanvasDrawing(isSmall);
-  const {
-    toggleBackground,
-    virtualBgRef,
-
-    virtualBgStream
-  } = useVirtualBackground(webcamStream);
+  const { isVirtualBgActive, toggleBackground, virtualBgRef, virtualBgStream } =
+    useVirtualBackground(webcamStream, isSmall);
 
   let ctx1 = displayRef.current ? displayRef.current.getContext('2d') : null;
   const videoRef = useRef(null);
@@ -53,7 +49,7 @@ const MediaCanvasProvider = ({ children }) => {
     setCombinedStream(stream);
 
     return () => {
-      [webcamStream, screenStream].forEach((stream) =>
+      [webcamStream, screenStream, virtualBgStream].forEach((stream) =>
         stream?.getTracks().forEach((track) => track.stop())
       );
     };
@@ -125,7 +121,9 @@ const MediaCanvasProvider = ({ children }) => {
             const y = height / 2;
             ctx1.fillText('Camera Off', x, y);
           } else {
-            ctx1.drawImage(virtualBgRef.current, x, y, width, height);
+            isVirtualBgActive
+              ? ctx1.drawImage(videoRef.current, x, y, width, height)
+              : ctx1.drawImage(webcamVideoRef.current, x, y, width, height);
           }
         }
 
@@ -145,7 +143,8 @@ const MediaCanvasProvider = ({ children }) => {
       isSmall,
       isVideoMuted,
       smallVideoPosition,
-      virtualBgStream
+      virtualBgStream,
+      isVirtualBgActive
     ]
   );
 
@@ -170,7 +169,12 @@ const MediaCanvasProvider = ({ children }) => {
   useEffect(() => {
     initilizeAndDrawDisplay();
     initilizeWhiteBoard();
-  }, [initilizeAndDrawDisplay, initilizeWhiteBoard]);
+  }, [
+    initilizeAndDrawDisplay,
+    initilizeWhiteBoard,
+    isVirtualBgActive,
+    isSmall
+  ]);
 
   const contextValue = useMemo(
     () => ({
@@ -191,7 +195,8 @@ const MediaCanvasProvider = ({ children }) => {
       webcamVideoRef,
       screenShareVideoRef,
       toggleBackground,
-      webcamStream
+      webcamStream,
+      virtualBgStream
     }),
     [
       isSmall,
@@ -207,7 +212,8 @@ const MediaCanvasProvider = ({ children }) => {
       screenShareVideoRef,
       isVideoMuted,
       toggleBackground,
-      webcamStream
+      webcamStream,
+      virtualBgStream
     ]
   );
 

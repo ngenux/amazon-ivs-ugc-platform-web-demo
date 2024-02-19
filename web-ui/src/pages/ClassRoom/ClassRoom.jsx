@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useChat } from '../../contexts/Chat.jsx';
+import { useResponsiveDevice } from '../../contexts/ResponsiveDevice.jsx';
 import { clsm } from '../../utils.js';
 import ChatManager from './components/ChatManager.jsx';
 import MainTeacher from './components/MainTeacher.jsx';
@@ -10,7 +11,6 @@ import StageParticipants from './components/StageParticipants.jsx';
 import VideoControls from './components/VideoControls.jsx';
 import { StageContext } from './contexts/StageContext.js';
 import { useMediaCanvas } from './hooks/useMediaCanvas.js';
-import { useResponsiveDevice } from '../../contexts/ResponsiveDevice.jsx';
 const { LocalStageStream } = window.IVSBroadcastClient;
 const aspectRatio = 16 / 9;
 
@@ -64,7 +64,10 @@ const ClassroomApp = () => {
     isWhiteBoardActive,
     isScreenShareActive,
     setIsVideoMuted,
-    toggleBackground
+    toggleBackground,
+    whiteboardRef,
+    screenShareVideoRef,
+    virtualBgStream
   } = useMediaCanvas();
   const {
     joinRequestStatus,
@@ -84,6 +87,7 @@ const ClassroomApp = () => {
   const { participants, localParticipant } = useContext(StageContext);
   const [stageParticipants, setStageParticipants] = useState();
   const [remoteParticipant, setRemoteParticipant] = useState({});
+  const [focusedParticipantId, setFocusedParticipantId] = useState();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
 
@@ -108,54 +112,53 @@ const ClassroomApp = () => {
   }, [annotationCanvasState]);
 
   useEffect(() => {
-    const combinedStageStream = combinedStream
-      ? new LocalStageStream(combinedStream?.getVideoTracks()[0], {
-          simulcast: { enabled: true }
-        })
-      : null;
+    try {
+      const combinedStageStream = combinedStream
+        ? new LocalStageStream(combinedStream.getVideoTracks()[0], {
+            simulcast: { enabled: true }
+          })
+        : null;
 
-    let newParticipantsMap = new Map(participants);
+      let newParticipantsMap = new Map(participants);
 
-    if (annotationCanvasState.participantId) {
-      const rParticipant = participants.get(
-        annotationCanvasState.participantId
-      );
-      setRemoteParticipant(rParticipant);
+      let finalRemoteParticipant = {}; 
 
-      newParticipantsMap.delete(annotationCanvasState.participantId);
+      const activeParticipantId =
+        annotationCanvasState.participantId || focusedParticipantId;
 
-      if (
-        localParticipant &&
-        localParticipant.id !== annotationCanvasState.participantId
-      ) {
-        localParticipant.streams = [
-          ...(localParticipant?.streams || []),
-          combinedStageStream
-        ];
-        newParticipantsMap.set(localParticipant.id, localParticipant);
+      if (activeParticipantId) {
+        const rParticipant = participants.get(activeParticipantId);
+
+        if (rParticipant) {
+          finalRemoteParticipant = rParticipant; 
+
+          newParticipantsMap.delete(activeParticipantId);
+
+          if (localParticipant && localParticipant.id !== activeParticipantId) {
+            localParticipant.streams = [
+              ...(localParticipant.streams || []),
+              combinedStageStream
+            ];
+            newParticipantsMap.set(localParticipant.id, localParticipant);
+          }
+        }
+      } else {
+        if (localParticipant) {
+          newParticipantsMap.delete(localParticipant.id);
+        }
       }
-    } else {
-      if (localParticipant) {
-        newParticipantsMap.delete(localParticipant.id);
-        setStageParticipants((prev) => prev?.delete(localParticipant.id));
-      }
 
-      if (
-        remoteParticipant &&
-        !newParticipantsMap.has(remoteParticipant.id) &&
-        remoteParticipant.id &&
-        !annotationCanvasState.participantId
-      ) {
-        newParticipantsMap.set(remoteParticipant.id, remoteParticipant);
-      }
+      
+      setStageParticipants(new Map(newParticipantsMap));
+      setRemoteParticipant(finalRemoteParticipant);
+    } catch (error) {
+      console.error('Error processing participants and streams:', error);
     }
-
-    setStageParticipants(newParticipantsMap);
   }, [
     participants,
     annotationCanvasState,
+    focusedParticipantId,
     localParticipant,
-    remoteParticipant,
     combinedStream
   ]);
 
@@ -179,7 +182,11 @@ const ClassroomApp = () => {
     setIsVideoMuted,
     toggleBackground,
     isVideoMuted,
-    displayRef
+    displayRef,
+    isSmall,
+    whiteboardRef,
+    screenShareVideoRef,
+    virtualBgStream
   };
 
   return (
@@ -196,13 +203,19 @@ const ClassroomApp = () => {
         )}
         ref={containerRef}
       >
-        <StageParticipants stageParticipants={stageParticipants} />
+        <StageParticipants
+          stageParticipants={stageParticipants}
+          setFocusedParticipantId={setFocusedParticipantId}
+        />
+        {/* {JSON.stringify(focusedParticipantId)} */}
         <MainTeacher
           dimensions={dimensions}
           chatConfig={chatConfig}
           activeUser={userData?.id}
           localParticipant={localParticipant}
           remoteParticipant={remoteParticipant}
+          focusedParticipantId={focusedParticipantId}
+          mediaConfig={mediaConfig}
         />
         <VideoControls
           {...chatConfig}
@@ -236,13 +249,15 @@ const Modal = ({ isOpen, isVideoMuted, displayRef }) => {
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!smallVideoRef.current || !isOpen) return;
+    if (!smallVideoRef.current || !isOpen || !displayRef.current) return;
 
     const canvas = smallVideoRef.current;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
 
     const draw = () => {
+      console.log('SMALL_DISPLAY_REF', displayRef.current);
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (isVideoMuted) {
         drawMutedMessage(ctx, canvas);

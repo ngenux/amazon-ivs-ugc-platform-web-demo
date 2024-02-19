@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { useMediaCanvas } from '../hooks/useMediaCanvas.js';
 import SharedCanvas from './SharedCanvas.jsx';
 const { StreamType } = window.IVSBroadcastClient;
 export default function MainTeacher({
@@ -7,7 +6,9 @@ export default function MainTeacher({
   activeUser,
   dimensions,
   localParticipant,
-  remoteParticipant
+  remoteParticipant,
+  focusedParticipantId,
+  mediaConfig
 }) {
   const {
     isSmall,
@@ -15,14 +16,15 @@ export default function MainTeacher({
     displayRef,
     whiteboardRef,
     screenShareVideoRef
-  } = useMediaCanvas();
+  } = mediaConfig;
   const { annotationCanvasState } = chatConfig;
   const remoteVideoRef = useRef(null);
 
   useEffect(() => {
     if (
       remoteParticipant &&
-      remoteParticipant?.id === annotationCanvasState?.participantId
+      (remoteParticipant?.id === annotationCanvasState?.participantId ||
+        remoteParticipant?.id === focusedParticipantId)
     ) {
       const videoStream = remoteParticipant?.streams?.find(
         (stream) => stream.streamType === StreamType.VIDEO
@@ -38,6 +40,7 @@ export default function MainTeacher({
     <div className="h-full">
       <div className="h-full ">
         <div className="w-full h-full relative">
+          {/* {JSON.stringify(localParticipant)} */}
           <canvas
             ref={displayRef}
             width={1280}
@@ -46,7 +49,10 @@ export default function MainTeacher({
               height: dimensions.height,
               width: dimensions.width,
               display:
-                isWhiteBoardActive || isSmall || annotationCanvasState.open
+                isWhiteBoardActive ||
+                isSmall ||
+                annotationCanvasState.open ||
+                !!focusedParticipantId
                   ? 'none'
                   : 'block'
             }}
@@ -70,6 +76,21 @@ export default function MainTeacher({
                 autoPlay
                 style={{
                   display: !annotationCanvasState.open ? 'none' : 'block',
+                  height: dimensions.height,
+                  width: dimensions.width,
+                  objectFit: 'fill'
+                }}
+              >
+                <track kind="captions"></track>
+              </video>
+            )}
+          {!!focusedParticipantId &&
+            focusedParticipantId !== localParticipant?.id && (
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                style={{
+                  display: !focusedParticipantId ? 'none' : 'block',
                   height: dimensions.height,
                   width: dimensions.width,
                   objectFit: 'fill'
