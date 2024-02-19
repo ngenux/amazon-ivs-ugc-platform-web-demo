@@ -13,6 +13,7 @@ const ROUTES = [
   { path: 'manager', name: 'stream_manager' },
   { path: 'stage', name: 'stage_manager' },
   { path: 'classroom', name: 'classroom' },
+  { path: 'recordings', name: 'recordings' },
   {
     path: '/health',
     name: 'stream_health',
