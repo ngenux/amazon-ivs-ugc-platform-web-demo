@@ -74,6 +74,7 @@ const ClassroomApp = () => {
     setIsStageOwner,
     sendDrawEvents,
     receiveDrawEvents,
+
     userData,
     annotationCanvasState,
     startSSWithAnnots,
