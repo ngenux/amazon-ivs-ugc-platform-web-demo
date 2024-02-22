@@ -7,6 +7,7 @@ import {
   ScreenShare,
   ScreenShareOff,
   VideoBG,
+  VideoBG,
   VideoCamera,
   VideoCameraOff,
   WhiteBoard,
