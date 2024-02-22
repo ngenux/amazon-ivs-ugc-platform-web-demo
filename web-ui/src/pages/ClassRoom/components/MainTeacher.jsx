@@ -104,7 +104,7 @@ export default function MainTeacher({
             ref={screenShareVideoRef}
             autoPlay
             style={{
-              display: !isSmall || isWhiteBoardActive ? 'none' : 'block',
+              display: !isSmall || isWhiteBoardActive || !!remoteParticipant?.id ? 'none' : 'block',
               height: dimensions.height,
               width: dimensions.width,
               objectFit: 'fill'

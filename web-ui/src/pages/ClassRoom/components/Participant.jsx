@@ -10,7 +10,9 @@ export default function Participant({
   videoStopped,
   audioMuted,
   streams = [],
-  setFocusedParticipantId
+  setFocusedParticipantId,
+  localParticipant,
+  annotationCanvasState
 }) {
   const videoStream = streams.find(
     (stream) => stream.streamType === StreamType.VIDEO
@@ -42,21 +44,25 @@ export default function Participant({
             <track kind="captions" />
           </audio>
 
-          {/* Options Menu Icon */}
-          <span
+        
+          {/* {!annotationCanvasState?.open && <span
             className="absolute top-0 right-0 p-2 cursor-pointer"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
             onClick={() => {
-              setFocusedParticipantId((prev) => (prev && prev===id ? undefined : id));
+              setFocusedParticipantId((prev) =>
+                prev && (prev === id || localParticipant.id === id)
+                  ? undefined
+                  : id
+              );
             }}
             role="button"
             tabIndex={0}
             aria-label="Options"
           >
             &#x22EE;
-          </span>
+          </span>} */}
+          
 
-          {/* Microphone Status */}
           <span
             className="absolute bottom-0 left-0 right-0 h-6 flex items-center justify-center text-black"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}

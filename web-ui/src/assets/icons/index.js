@@ -74,3 +74,4 @@ export { ReactComponent as WhiteBoard } from './whiteboard.svg';
 export { ReactComponent as WhiteBoardOff } from './whiteboard-off.svg';
 export { ReactComponent as CallDisconnect } from './call-disconnect.svg';
 export { ReactComponent as VideoBG } from './video-bg.svg';
+export { ReactComponent as CollabSS } from './collab-ss.svg';

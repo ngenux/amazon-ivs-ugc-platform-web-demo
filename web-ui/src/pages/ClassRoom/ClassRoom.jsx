@@ -204,8 +204,12 @@ const ClassroomApp = () => {
         ref={containerRef}
       >
         <StageParticipants
+        chatConfig={chatConfig}
           stageParticipants={stageParticipants}
           setFocusedParticipantId={setFocusedParticipantId}
+          localParticipant={localParticipant}
+          remoteParticipant={remoteParticipant}
+          focusedParticipantId={focusedParticipantId}
         />
         {/* {JSON.stringify(focusedParticipantId)} */}
         <MainTeacher
