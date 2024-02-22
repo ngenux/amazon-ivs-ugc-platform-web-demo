@@ -7,7 +7,6 @@ import {
   ScreenShare,
   ScreenShareOff,
   VideoBG,
-  VideoBG,
   VideoCamera,
   VideoCameraOff,
   WhiteBoard,
@@ -44,7 +43,6 @@ export default function VideoControls({
   const [audioMuted, setAudioMuted] = useState(true);
   const [videoMuted, setVideoMuted] = useState(true);
   const [openVirtualBgPanel, setOpenVirtualBgPanel] = useState(false);
-  // const [isCollabSS,setIsCollabSS] = useState(false)
   const isCollabSSRef = useRef(false);
 
   if (currentAudioDevice && audioMuted !== currentAudioDevice.isMuted) {
@@ -235,9 +233,10 @@ export default function VideoControls({
         </button>
         <button
           className="text-xs bg-gray-300 p-2 rounded-full mx-1"
-          onClick={toggleScreenShare}
-          disabled={isWhiteBoardActive || isCollabSSRef.current}
-
+          // onClick={toggleScreenShare}
+          // disabled={isWhiteBoardActive || isCollabSSRef.current}
+          onClick={handleCollabSS}
+          disabled={isWhiteBoardActive}
         >
           {!isScreenShareActive ? (
             <ScreenShare style={{ height: 20 }} />
@@ -246,7 +245,7 @@ export default function VideoControls({
           )}
         </button>
 
-        <button
+        {/* <button
           className="text-xs bg-gray-300 p-2 px-5  rounded-full mx-1"
           onClick={handleCollabSS}
           disabled={isWhiteBoardActive}
@@ -258,7 +257,7 @@ export default function VideoControls({
           ) : (
             <CollabSS style={{ height: 20 }} />
           )}
-        </button>
+        </button> */}
         <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
           disabled={isScreenShareActive}

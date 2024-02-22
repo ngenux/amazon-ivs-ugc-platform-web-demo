@@ -3,7 +3,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useChat } from '../../contexts/Chat.jsx';
 import { useResponsiveDevice } from '../../contexts/ResponsiveDevice.jsx';
-import { useResponsiveDevice } from '../../contexts/ResponsiveDevice.jsx';
 import { clsm } from '../../utils.js';
 import ChatManager from './components/ChatManager.jsx';
 import MainTeacher from './components/MainTeacher.jsx';
@@ -12,7 +11,6 @@ import StageParticipants from './components/StageParticipants.jsx';
 import VideoControls from './components/VideoControls.jsx';
 import { StageContext } from './contexts/StageContext.js';
 import { useMediaCanvas } from './hooks/useMediaCanvas.js';
-import { useResponsiveDevice } from '../../contexts/ResponsiveDevice.jsx';
 const { LocalStageStream } = window.IVSBroadcastClient;
 const aspectRatio = 16 / 9;
 
