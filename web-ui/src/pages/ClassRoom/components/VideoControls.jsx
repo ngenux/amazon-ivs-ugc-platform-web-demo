@@ -236,7 +236,7 @@ export default function VideoControls({
           // onClick={toggleScreenShare}
           // disabled={isWhiteBoardActive || isCollabSSRef.current}
           onClick={handleCollabSS}
-          disabled={isWhiteBoardActive}
+          disabled={isWhiteBoardActive || annotationCanvasState?.participantId !==localParticipant?.id}
         >
           {!isScreenShareActive ? (
             <ScreenShare style={{ height: 20 }} />
