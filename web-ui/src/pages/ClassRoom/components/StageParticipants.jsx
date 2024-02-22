@@ -1,13 +1,31 @@
 import React from 'react';
 import Participant from './Participant.jsx';
 
-export default function StageParticipants({stageParticipants,setFocusedParticipantId}) {
+export default function StageParticipants({
+  stageParticipants,
+  setFocusedParticipantId,
+  localParticipant,
+  remoteParticipant,
+  focusedParticipantId,
+  chatConfig
+}) {
+  const { annotationCanvasState } = chatConfig;
   return (
     <>
       {stageParticipants ? (
         <div className="flex flex-wrap items-stretch h-1/4 items-center ">
           {[...stageParticipants?.keys()].slice(0, 4).map((key) => {
-            return <Participant key={key} {...stageParticipants?.get(key)} setFocusedParticipantId={setFocusedParticipantId}/>;
+            return (
+              <Participant
+                key={key}
+                {...stageParticipants?.get(key)}
+                setFocusedParticipantId={setFocusedParticipantId}
+                localParticipant={localParticipant}
+                remoteParticipant={remoteParticipant}
+                focusedParticipantId={focusedParticipantId}
+                annotationCanvasState={annotationCanvasState}
+              />
+            );
           })}
           {stageParticipants?.keys().length >= 5 && (
             <div className="w-1/6 h-auto p-1 border-2">

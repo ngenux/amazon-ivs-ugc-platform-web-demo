@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CallDisconnect,
@@ -10,7 +10,8 @@ import {
   VideoCamera,
   VideoCameraOff,
   WhiteBoard,
-  WhiteBoardOff
+  WhiteBoardOff,
+  CollabSS
 } from '../../../assets/icons/index.js';
 import { BroadcastContext } from '../contexts/BroadcastContext.js';
 import { LocalMediaContext } from '../contexts/LocalMediaContext.js';
@@ -42,6 +43,8 @@ export default function VideoControls({
   const [audioMuted, setAudioMuted] = useState(true);
   const [videoMuted, setVideoMuted] = useState(true);
   const [openVirtualBgPanel, setOpenVirtualBgPanel] = useState(false);
+  // const [isCollabSS,setIsCollabSS] = useState(false)
+  const isCollabSSRef = useRef(false);
 
   if (currentAudioDevice && audioMuted !== currentAudioDevice.isMuted) {
     setAudioMuted(currentAudioDevice.isMuted);
@@ -133,12 +136,15 @@ export default function VideoControls({
   useEffect(() => {
     stageJoined && toggleBroadcast();
   }, [stageJoined]);
-  
+
   useEffect(() => {
-    isScreenShareActive
-      ? startSSWithAnnots(localParticipant?.id)
-      : stopSSWithAnnots();
-  }, [isScreenShareActive, localParticipant]);
+    if (isScreenShareActive) {
+      isCollabSSRef.current && startSSWithAnnots(localParticipant?.id);
+    } else {
+      stopSSWithAnnots();
+      isCollabSSRef.current = false;
+    }
+  }, [isScreenShareActive, localParticipant, isCollabSSRef]);
 
   const joinStageFn = async (groupId) => {
     if (count > 0) return;
@@ -187,6 +193,11 @@ export default function VideoControls({
       navigate(-1);
     }
   };
+
+  const handleCollabSS = () => {
+    isCollabSSRef.current = true;
+    toggleScreenShare();
+  };
   return (
     /* Video Controls Panel - fixed height */
     <div className="h-18  p-4">
@@ -224,6 +235,8 @@ export default function VideoControls({
         <button
           className="text-xs bg-gray-300 p-2 rounded-full mx-1"
           onClick={toggleScreenShare}
+          disabled={isWhiteBoardActive || isCollabSSRef.current}
+
         >
           {!isScreenShareActive ? (
             <ScreenShare style={{ height: 20 }} />
@@ -231,8 +244,23 @@ export default function VideoControls({
             <ScreenShareOff style={{ height: 20 }} />
           )}
         </button>
+
+        <button
+          className="text-xs bg-gray-300 p-2 px-5  rounded-full mx-1"
+          onClick={handleCollabSS}
+          disabled={isWhiteBoardActive}
+
+        >
+          
+          {!isScreenShareActive ? (
+            <CollabSS style={{ height: 20 }} />
+          ) : (
+            <CollabSS style={{ height: 20 }} />
+          )}
+        </button>
         <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
+          disabled={isScreenShareActive}
           onClick={toggleWhiteBoard}
         >
           {!isWhiteBoardActive ? (
