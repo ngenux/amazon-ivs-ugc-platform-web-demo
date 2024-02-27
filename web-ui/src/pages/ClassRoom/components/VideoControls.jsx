@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CallDisconnect,
@@ -43,6 +49,7 @@ export default function VideoControls({
   const [audioMuted, setAudioMuted] = useState(true);
   const [videoMuted, setVideoMuted] = useState(true);
   const [openVirtualBgPanel, setOpenVirtualBgPanel] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isCollabSSRef = useRef(false);
 
   if (currentAudioDevice && audioMuted !== currentAudioDevice.isMuted) {
@@ -138,7 +145,11 @@ export default function VideoControls({
 
   useEffect(() => {
     if (isScreenShareActive) {
-      isCollabSSRef.current && startSSWithAnnots(localParticipant?.id);
+      startSSWithAnnots(localParticipant?.id);
+
+      // if (isCollabSSRef.current) {
+      //   startSSWithAnnots(localParticipant?.id);
+      // }
     } else {
       stopSSWithAnnots();
       isCollabSSRef.current = false;
@@ -193,10 +204,74 @@ export default function VideoControls({
     }
   };
 
-  const handleCollabSS = () => {
-    isCollabSSRef.current = true;
+  const handleCollabSS = useCallback(() => {
+    isCollabSSRef.current = !isCollabSSRef.current;
     toggleScreenShare();
+  }, [isCollabSSRef.current, isScreenShareActive]);
+
+  const ScreenShareToggle = ({
+    isScreenShareActive,
+    isCollabSSRef,
+    handleCollabSS,
+    toggleScreenShare,
+    isWhiteBoardActive,
+    annotationCanvasState,
+    localParticipant
+  }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+    const handleButtonClick = () => {
+      if (isScreenShareActive) {
+        isCollabSSRef.current ? handleCollabSS() : toggleScreenShare();
+      } else {
+        toggleMenu();
+      }
+    };
+
+    return (
+      <div className="relative">
+        <button
+          className="text-xs bg-gray-300 p-2 rounded-full mx-1"
+          onClick={handleButtonClick}
+          disabled={
+            isWhiteBoardActive ||
+            (annotationCanvasState?.open && annotationCanvasState?.participantId !== localParticipant?.id)
+          }
+        >
+          {!isScreenShareActive ? (
+            <ScreenShare style={{ height: 20 }} />
+          ) : (
+            <ScreenShareOff style={{ height: 20 }} />
+          )}
+        </button>
+        {isMenuOpen && (
+          <div className="absolute bottom-full mb-2 bg-white shadow-md rounded-lg p-2 flex flex-col">
+            <button
+            className="mb-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md text-left px-4"
+            onClick={() => {
+              toggleScreenShare();
+              toggleMenu();
+            }}
+          >
+            Individual
+          </button>
+          <button
+            className="py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md text-left px-4"
+            onClick={() => {
+              handleCollabSS();
+              toggleMenu();
+            }}
+          >
+            Collaborative
+          </button>
+          </div>
+        )}
+      </div>
+    );
   };
+
   return (
     /* Video Controls Panel - fixed height */
     <div className="h-18  p-4">
@@ -235,8 +310,12 @@ export default function VideoControls({
           className="text-xs bg-gray-300 p-2 rounded-full mx-1"
           // onClick={toggleScreenShare}
           // disabled={isWhiteBoardActive || isCollabSSRef.current}
-          onClick={handleCollabSS}
-          disabled={isWhiteBoardActive || annotationCanvasState?.participantId !==localParticipant?.id}
+          onClick={toggleScreenShare}
+          disabled={
+            isWhiteBoardActive ||
+            (annotationCanvasState?.open &&
+              annotationCanvasState?.participantId !== localParticipant?.id)
+          }
         >
           {!isScreenShareActive ? (
             <ScreenShare style={{ height: 20 }} />
@@ -245,19 +324,18 @@ export default function VideoControls({
           )}
         </button>
 
-        {/* <button
-          className="text-xs bg-gray-300 p-2 px-5  rounded-full mx-1"
-          onClick={handleCollabSS}
-          disabled={isWhiteBoardActive}
 
-        >
-          
-          {!isScreenShareActive ? (
-            <CollabSS style={{ height: 20 }} />
-          ) : (
-            <CollabSS style={{ height: 20 }} />
-          )}
-        </button> */}
+        {/* <ScreenShareToggle
+          isScreenShareActive={isScreenShareActive}
+          isCollabSSRef={isCollabSSRef}
+          handleCollabSS={handleCollabSS}
+          toggleScreenShare={toggleScreenShare}
+          isWhiteBoardActive={isWhiteBoardActive}
+          annotationCanvasState={annotationCanvasState}
+          localParticipant={localParticipant}
+        /> */}
+
+        
         <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
           disabled={isScreenShareActive}
