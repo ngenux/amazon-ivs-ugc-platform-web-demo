@@ -24,12 +24,15 @@ const useScreenShare = (setIsSmall) => {
     };
   
     useEffect(() => {
+      if (!screenStream && isScreenShareActive) {
+        setIsScreenShareActive(false)
+      }
       return () => {
         if (screenStream) {
           screenStream.getTracks().forEach((track) => track.stop());
         }
       };
-    }, [screenStream]);
+    }, [screenStream,isScreenShareActive]);
   
     return { screenShareVideoRef, screenStream, getScreenShare ,setScreenStream,isScreenShareActive,setIsScreenShareActive};
   };
