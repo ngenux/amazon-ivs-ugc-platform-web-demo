@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MicOff, MicOn } from '../../../assets/icons/index.js';
 import Placeholder from './Placeholder';
 import Video from './Video';
@@ -12,6 +12,7 @@ export default function Participant({
   streams = [],
   setFocusedParticipantId
 }) {
+  const [isTalking, setIsTalking] = useState(false);
   const videoStream = streams.find(
     (stream) => stream.streamType === StreamType.VIDEO
   );
@@ -27,10 +28,41 @@ export default function Participant({
         audioStream.mediaStreamTrack
       ]);
     }
+
+    const startAudioProcessing = async () => {
+      if (!audioRef.current || !audioStream) {
+        console.error('No audio stream found!');
+        return;
+      }
+
+      try {
+        const audioContext = new window.AudioContext();
+        await audioContext.audioWorklet.addModule('vad-processor.js');
+
+        const microphone = audioContext.createMediaStreamSource(
+          new MediaStream([audioStream.mediaStreamTrack])
+        );
+        const vadNode = new AudioWorkletNode(audioContext, 'vad-processor');
+
+        vadNode.port.onmessage = (event) => {
+          setIsTalking(event.data.isTalking);
+        };
+
+        microphone.connect(vadNode).connect(audioContext.destination);
+      } catch (err) {
+        console.error('Error accessing the microphone', err);
+      }
+    };
+
+    startAudioProcessing();
   }, [audioRef, audioStream]);
 
   return (
-    <div className="w-1/5 h-auto p-1 border mr-1">
+    <div
+      className={`w-1/5 h-auto p-1 border transition-border ${
+        isTalking ? 'border-4 border-blue-400' : ''
+      } mr-1`}
+    >
       <div className="flex flex-col h-full">
         <div className="h-full w-full text-center relative">
           {videoStream && !videoStopped ? (
@@ -47,7 +79,9 @@ export default function Participant({
             className="absolute top-0 right-0 p-2 cursor-pointer"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
             onClick={() => {
-              setFocusedParticipantId((prev) => (prev && prev===id ? undefined : id));
+              setFocusedParticipantId((prev) =>
+                prev && prev === id ? undefined : id
+              );
             }}
             role="button"
             tabIndex={0}
