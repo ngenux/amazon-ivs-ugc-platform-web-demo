@@ -145,11 +145,11 @@ export default function VideoControls({
 
   useEffect(() => {
     if (isScreenShareActive) {
-      startSSWithAnnots(localParticipant?.id);
+      // startSSWithAnnots(localParticipant?.id);
 
-      // if (isCollabSSRef.current) {
-      //   startSSWithAnnots(localParticipant?.id);
-      // }
+      if (isCollabSSRef.current) {
+        startSSWithAnnots(localParticipant?.id);
+      }
     } else {
       stopSSWithAnnots();
       isCollabSSRef.current = false;
@@ -306,7 +306,7 @@ export default function VideoControls({
             <VideoCameraOff style={{ height: 20 }} />
           )}
         </button>
-        <button
+        {/* <button
           className="text-xs bg-gray-300 p-2 rounded-full mx-1"
           // onClick={toggleScreenShare}
           // disabled={isWhiteBoardActive || isCollabSSRef.current}
@@ -322,10 +322,10 @@ export default function VideoControls({
           ) : (
             <ScreenShareOff style={{ height: 20 }} />
           )}
-        </button>
+        </button> */}
 
 
-        {/* <ScreenShareToggle
+        <ScreenShareToggle
           isScreenShareActive={isScreenShareActive}
           isCollabSSRef={isCollabSSRef}
           handleCollabSS={handleCollabSS}
@@ -333,7 +333,7 @@ export default function VideoControls({
           isWhiteBoardActive={isWhiteBoardActive}
           annotationCanvasState={annotationCanvasState}
           localParticipant={localParticipant}
-        /> */}
+        />
 
         
         <button
