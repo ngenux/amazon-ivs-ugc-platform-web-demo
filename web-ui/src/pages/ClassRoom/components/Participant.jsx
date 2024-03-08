@@ -45,7 +45,7 @@ export default function Participant({
           </audio>
 
         
-          {/* {!annotationCanvasState?.open && <span
+          {!annotationCanvasState?.open && <span
             className="absolute top-0 right-0 p-2 cursor-pointer"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
             onClick={() => {
@@ -60,7 +60,7 @@ export default function Participant({
             aria-label="Options"
           >
             &#x22EE;
-          </span>} */}
+          </span>}
           
 
           <span
