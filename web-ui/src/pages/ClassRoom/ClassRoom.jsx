@@ -67,7 +67,10 @@ const ClassroomApp = () => {
     toggleBackground,
     whiteboardRef,
     screenShareVideoRef,
-    virtualBgStream
+    virtualBgStream,
+    nextPage,
+    previousPage,
+    currentPageIndex
   } = useMediaCanvas();
   const {
     joinRequestStatus,
@@ -121,7 +124,7 @@ const ClassroomApp = () => {
 
       let newParticipantsMap = new Map(participants);
 
-      let finalRemoteParticipant = {}; 
+      let finalRemoteParticipant = {};
 
       const activeParticipantId =
         annotationCanvasState.participantId || focusedParticipantId;
@@ -130,7 +133,7 @@ const ClassroomApp = () => {
         const rParticipant = participants.get(activeParticipantId);
 
         if (rParticipant) {
-          finalRemoteParticipant = rParticipant; 
+          finalRemoteParticipant = rParticipant;
 
           newParticipantsMap.delete(activeParticipantId);
 
@@ -148,7 +151,7 @@ const ClassroomApp = () => {
         }
       }
 
-      
+
       setStageParticipants(new Map(newParticipantsMap));
       setRemoteParticipant(finalRemoteParticipant);
     } catch (error) {
@@ -186,7 +189,10 @@ const ClassroomApp = () => {
     isSmall,
     whiteboardRef,
     screenShareVideoRef,
-    virtualBgStream
+    virtualBgStream,
+    nextPage,
+    previousPage,
+    currentPageIndex
   };
 
   return (
@@ -204,7 +210,7 @@ const ClassroomApp = () => {
         ref={containerRef}
       >
         <StageParticipants
-        chatConfig={chatConfig}
+          chatConfig={chatConfig}
           stageParticipants={stageParticipants}
           setFocusedParticipantId={setFocusedParticipantId}
           localParticipant={localParticipant}

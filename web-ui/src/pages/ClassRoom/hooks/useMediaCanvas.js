@@ -35,7 +35,10 @@ const MediaCanvasProvider = ({ children }) => {
     currentDragPosition,
     displayMouseDown,
     displayMouseMove,
-    displayMouseUp
+    displayMouseUp,
+    nextPage,
+    previousPage,
+    currentPageIndex
   } = useCanvasDrawing(isSmall);
   const { isVirtualBgActive, toggleBackground, virtualBgRef, virtualBgStream } =
     useVirtualBackground(webcamStream, isSmall);
@@ -196,7 +199,10 @@ const MediaCanvasProvider = ({ children }) => {
       screenShareVideoRef,
       toggleBackground,
       webcamStream,
-      virtualBgStream
+      virtualBgStream,
+      nextPage,
+      previousPage,
+      currentPageIndex
     }),
     [
       isSmall,
@@ -213,7 +219,10 @@ const MediaCanvasProvider = ({ children }) => {
       isVideoMuted,
       toggleBackground,
       webcamStream,
-      virtualBgStream
+      virtualBgStream,
+      nextPage,
+      previousPage,
+      currentPageIndex
     ]
   );
 

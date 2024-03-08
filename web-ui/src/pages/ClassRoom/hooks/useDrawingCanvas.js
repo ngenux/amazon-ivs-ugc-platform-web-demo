@@ -5,6 +5,8 @@ const useCanvasDrawing = (isSmall) => {
   const [isWhiteBoardActive, setIsWhiteBoardActive] = useState(false);
   const [smallVideoPosition, setSmallVideoPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [pages, setPages] = useState([]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const isDrawing = useRef(false);
   const [lastDrawPosition, setLastDrawPosition] = useState({ x: 0, y: 0 });
@@ -15,6 +17,12 @@ const useCanvasDrawing = (isSmall) => {
       const canvas = whiteboardRef.current;
       if (canvas) {
         ctx2Ref.current = canvas.getContext('2d');
+        ctx2Ref.current.fillStyle = 'white';
+        ctx2Ref.current.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx2Ref.current.strokeStyle = '#000000';
+        ctx2Ref.current.lineWidth = 2;
+        setPages([ctx2Ref.current.canvas.toDataURL()]);
         canvas.addEventListener('mousedown', whiteBoardMouseDown);
         canvas.addEventListener('mousemove', whiteBoardMouseMove);
         canvas.addEventListener('mouseup', whiteBoardMouseUp);
@@ -46,6 +54,74 @@ const useCanvasDrawing = (isSmall) => {
       // ctx.scale(dpr, dpr); // If whiteboard is placed in small place then uncomment this.
     }
   }, []);
+
+  const nextPage = useCallback(() => {
+    if (isWhiteBoardActive && ctx2Ref.current) {
+      const imageData = ctx2Ref.current.canvas.toDataURL();
+
+      const tempPages = pages;
+      // Save the last page
+      tempPages[currentPageIndex] = imageData;
+      // Add New page
+      const canvas = whiteboardRef.current;
+
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+
+      const context = canvas.getContext('2d');
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.strokeStyle = '#000000';
+      context.lineWidth = 2;
+
+      tempPages.push(canvas.toDataURL());
+
+      setPages(tempPages);
+      setCurrentPageIndex((prevIndex) => prevIndex + 1);
+    }
+  }, [isWhiteBoardActive, ctx2Ref, currentPageIndex, pages]);
+
+  const previousPage = useCallback(() => {
+    const imageData = ctx2Ref.current.canvas.toDataURL();
+
+    const tempPages = pages;
+    // Save the last page
+    tempPages[currentPageIndex] = imageData;
+    setPages(tempPages);
+
+    if (currentPageIndex > 0) {
+      setCurrentPageIndex((prevIndex) => prevIndex - 1);
+    }
+  }, [currentPageIndex]);
+
+  useEffect(() => {
+    // Load the selected page when currentPageIndex changes
+    if (currentPageIndex >= 0 && currentPageIndex < pages.length) {
+      const canvas = whiteboardRef.current;
+      const ctx = canvas.getContext('2d');
+
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.src = pages[currentPageIndex];
+    }
+  }, [currentPageIndex, pages]);
 
   const displayMouseDown = useCallback(
     (e) => {
@@ -158,7 +234,10 @@ const useCanvasDrawing = (isSmall) => {
     displayMouseDown,
     displayMouseMove,
     displayMouseUp,
-    currentDragPosition
+    currentDragPosition,
+    nextPage,
+    previousPage,
+    currentPageIndex
   };
 };
 

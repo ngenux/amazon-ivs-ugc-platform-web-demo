@@ -42,7 +42,10 @@ export default function VideoControls({
   isWhiteBoardActive,
   isScreenShareActive,
   setIsVideoMuted,
-  toggleBackground
+  toggleBackground,
+  nextPage,
+  previousPage,
+  currentPageIndex
 }) {
   const { currentAudioDevice, currentVideoDevice } =
     useContext(LocalMediaContext);
@@ -249,23 +252,23 @@ export default function VideoControls({
         {isMenuOpen && (
           <div className="absolute bottom-full mb-2 bg-white shadow-md rounded-lg p-2 flex flex-col">
             <button
-            className="mb-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md text-left px-4"
-            onClick={() => {
-              toggleScreenShare();
-              toggleMenu();
-            }}
-          >
-            Individual
-          </button>
-          <button
-            className="py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md text-left px-4"
-            onClick={() => {
-              handleCollabSS();
-              toggleMenu();
-            }}
-          >
-            Collaborative
-          </button>
+              className="mb-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md text-left px-4"
+              onClick={() => {
+                toggleScreenShare();
+                toggleMenu();
+              }}
+            >
+              Individual
+            </button>
+            <button
+              className="py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md text-left px-4"
+              onClick={() => {
+                handleCollabSS();
+                toggleMenu();
+              }}
+            >
+              Collaborative
+            </button>
           </div>
         )}
       </div>
@@ -335,7 +338,7 @@ export default function VideoControls({
           localParticipant={localParticipant}
         />
 
-        
+
         <button
           className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
           disabled={isScreenShareActive}
@@ -377,6 +380,25 @@ export default function VideoControls({
           isOpen={openVirtualBgPanel}
           setIsOpen={setOpenVirtualBgPanel}
         />
+        <div className="relative left-40 zIndex-30">
+          {isWhiteBoardActive && (
+            <>
+              <button
+                className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
+                onClick={previousPage}
+              >
+                {'<'}
+              </button>
+              <span>Page: {currentPageIndex + 1}</span>
+              <button
+                className="text-xs bg-gray-300 p-2 px-5 rounded-full mx-1"
+                onClick={nextPage}
+              >
+                {'>'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
