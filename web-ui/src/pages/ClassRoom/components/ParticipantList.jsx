@@ -72,7 +72,7 @@ const ParticipantList = () => {
             <div key={participant.name} className="flex items-center space-x-2 pl-5 font-bold text-blue-700">
                 <span className="mr-2">{participant?.value?.userId}</span>
                 <span >
-                {participant?.value?.audioMuted ? <MicOn style={{ height: 15 }} /> : <MicOff style={{ height: 15 }} />}
+                {!participant?.value?.audioMuted ? <MicOn style={{ height: 15 }} /> : <MicOff style={{ height: 15 }} />}
                 </span>
                 <span>{participant?.value?.isPublishing ? <VideoCamera style={{ height: 15 }} /> : <VideoCameraOff style={{ height: 15 }} />}</span>
             </div>
